@@ -11,7 +11,8 @@ package paprika
 //	PAPRIKA_IT_MEAL_DATE              YYYY-MM-DD, a day you do not plan on; enables the meal write test
 //	PAPRIKA_IT_RECIPE_UID             optional disposable recipe to plan in the meal write test; if its
 //	                                  name contains "test" it also enables the recipe edit test
-//	PAPRIKA_IT_PANTRY                 set to 1 to enable the pantry write, edit and removal tests
+//	PAPRIKA_IT_PANTRY                 set to 1 to enable the pantry write, edit and removal tests;
+//	                                  the location test also needs two pantry locations besides the default one
 //
 //	go test -tags integration -run Live -v ./internal/paprika/
 //
@@ -452,6 +453,89 @@ func TestLivePantryEdit(t *testing.T) {
 		t.Fatalf("removed item %q is still returned; delete it by hand", renamed)
 	}
 	removed = true
+}
+
+// TestLivePantryLocation checks the Paprika 4 fields of a pantry item on v3: an item
+// created in a location with a note keeps both, and an edit can move it and clear the note.
+func TestLivePantryLocation(t *testing.T) {
+	c := liveClient(t)
+	if os.Getenv("PAPRIKA_IT_PANTRY") != "1" {
+		t.Skip("PAPRIKA_IT_PANTRY is not 1")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	rows, err := c.List(ctx, PantryLocations)
+	if err != nil {
+		t.Fatalf("pantry locations: %v", err)
+	}
+	var places []PantryLocation
+	for _, r := range rows {
+		l, err := Decode[PantryLocation](r.JSON)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !l.IsDefault {
+			places = append(places, l)
+		}
+	}
+	if len(places) < 2 {
+		t.Skipf("the account has %d pantry locations besides the default one; create two in the app", len(places))
+	}
+	first, second := places[0], places[1]
+
+	note := "[adapter-it] note"
+	item := NewPantryItem{UID: NewUID(), Ingredient: "[adapter-it] " + time.Now().UTC().Format(time.RFC3339), Quantity: "1 test",
+		InStock: true, PurchaseDate: "2026-01-01 00:00:00", LocationUID: &first.UID, Notes: &note}
+	if err := c.AddPantryItems(ctx, []NewPantryItem{item}); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	removed := false
+	t.Cleanup(func() {
+		if removed {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		if err := c.upsert(ctx, Pantry, []pantryWire{{NewPantryItem: item, Deleted: true}}); err != nil {
+			t.Errorf("CLEANUP FAILED, delete %q from the pantry by hand: %v", item.Ingredient, err)
+		}
+	})
+	created, found := liveFind(t, c, Pantry, item.UID)
+	if !found {
+		t.Fatal("the new item is not returned")
+	}
+	if got, _ := Decode[PantryItem](created.JSON); deref(got.LocationUID) != first.UID || deref(got.Notes) != note {
+		t.Fatalf("created in %q with a note, read back %s", first.Name, created.JSON)
+	}
+
+	empty := ""
+	if err := c.EditPantryItem(ctx, created, PantryEdit{LocationUID: &second.UID, Notes: &empty}); err != nil {
+		t.Fatalf("move: %v", err)
+	}
+	moved, found := liveFind(t, c, Pantry, item.UID)
+	if !found {
+		t.Fatal("the moved item is not returned")
+	}
+	if got, _ := Decode[PantryItem](moved.JSON); deref(got.LocationUID) != second.UID || got.Notes != nil || got.Ingredient != item.Ingredient {
+		t.Fatalf("moved to %q with the note removed, read back %s", second.Name, moved.JSON)
+	}
+
+	if err := c.RemovePantryItems(ctx, []Raw{moved}); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+	if _, found := liveFind(t, c, Pantry, item.UID); found {
+		t.Fatalf("removed item %q is still returned; delete it by hand", item.Ingredient)
+	}
+	removed = true
+	t.Logf("created in %q, moved to %q: %s", first.Name, second.Name, moved.JSON)
+}
+
+func deref(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }
 
 func TestLiveMealWrite(t *testing.T) {
