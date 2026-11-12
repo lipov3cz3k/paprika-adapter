@@ -50,17 +50,17 @@ func verify(ctx context.Context) error {
 			missing = append(missing, c)
 		}
 	}
-	row("Change counters", "GET /api/v2/sync/status/", len(counters), paprika.Drift{Missing: missing}, err)
+	row("Change counters", "GET "+paprika.SyncPath+"status/", len(counters), paprika.Drift{Missing: missing}, err)
 
 	refs, err := a.client.RecipeRefs(ctx)
-	row("Recipe list", "GET /api/v2/sync/recipes/", len(refs), paprika.Drift{}, err)
+	row("Recipe list", "GET "+paprika.SyncPath+"recipes/", len(refs), paprika.Drift{}, err)
 	if len(refs) > 0 {
 		rec, err := a.client.Recipe(ctx, refs[0].UID)
-		row("Recipe detail", "GET /api/v2/sync/recipe/{uid}/", 1, paprika.DetectDrift(paprika.Recipes, []paprika.Raw{rec}), err)
+		row("Recipe detail", "GET "+paprika.SyncPath+"recipe/{uid}/", 1, paprika.DetectDrift(paprika.Recipes, []paprika.Raw{rec}), err)
 	}
 	for _, col := range paprika.Collections {
 		rows, err := a.client.List(ctx, col)
-		row(string(col), "GET /api/v2/sync/"+string(col)+"/", len(rows), paprika.DetectDrift(string(col), rows), err)
+		row(string(col), "GET "+paprika.SyncPath+string(col)+"/", len(rows), paprika.DetectDrift(string(col), rows), err)
 	}
 
 	fmt.Printf("\nWrites are not exercised here. Verify them with the opt-in integration test (docs/RUNBOOK.md).\n")

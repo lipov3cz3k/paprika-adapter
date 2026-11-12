@@ -3,6 +3,8 @@ package mcpserver_test
 import (
 	"strings"
 	"testing"
+
+	"github.com/pavel-alay/paprika-adapter/internal/paprika"
 )
 
 const newDirections = "Heat the oven to 220C.\nRoast for 1 hour 20 minutes, then rest."
@@ -120,7 +122,7 @@ func TestRecipeEditInputsMustBeExplicit(t *testing.T) {
 	}
 	h.fails("propose_recipe_edit", map[string]any{"uid": "NOPE", "rating": 3}, "not_found")
 	h.fails("propose_recipe_edit", map[string]any{"uid": roastUID, "rating": 5}, "duplicate") // already five stars
-	if h.fake.Hits("POST /api/v2/sync/recipe/") != 0 {
+	if h.fake.Hits("POST "+paprika.SyncPath+"recipe/") != 0 {
 		t.Fatal("a refused edit reached Paprika")
 	}
 	cleared := h.ok("propose_recipe_edit", map[string]any{"uid": soupUID, "rating": 0}).Proposal

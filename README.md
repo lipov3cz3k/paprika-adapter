@@ -1,13 +1,14 @@
 # paprika-adapter
 
-A small, self-hosted bridge between one household's **Paprika 3** cloud sync account and MCP clients.
+A small, self-hosted bridge between one household's **Paprika** cloud sync account (Paprika 3 or 4) and MCP clients.
 It runs as one container, caches Paprika data in local SQLite and exposes a handful
 of typed tools over HTTP, to clients that present a token. It is not a recipe database and has no web UI:
 Paprika stays the source of truth.
 
 > **Unofficial API.** Paprika publishes no API; this talks to the same sync endpoints the apps use.
-> **It works with Paprika 3.8.4**, checked against a real account in October 2026. Paprika can change the
-> API at any time: run `verify` and the integration test before relying on it, and see
+> **It works with Paprika 3.8.4 and 4.0.22**, checked against a real account in October and November 2026.
+> Since Paprika 4 it talks to the v3 sync API, as the apps do; reads there are checked, writes were checked
+> on v2 and are not yet re-checked on v3. Paprika can change the API at any time: run `verify` and the integration test before relying on it, and see
 > [docs/PROTOCOL.md](docs/PROTOCOL.md) for what has been verified, operation by operation.
 
 ## What it does

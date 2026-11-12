@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pavel-alay/paprika-adapter/internal/mcpserver"
+	"github.com/pavel-alay/paprika-adapter/internal/paprika"
 )
 
 func groceryProposal(h *harness, names ...string) reply {
@@ -101,7 +102,7 @@ func TestLostAcknowledgementIsRecoveredWithoutDuplicate(t *testing.T) {
 func TestFailedWriteCanBeRetried(t *testing.T) {
 	h := newHarness(t, true)
 	p := groceryProposal(h, "oat milk").Proposal
-	h.fake.FailNext("POST /api/v2/sync/groceries/", 503) // Paprika stores nothing
+	h.fake.FailNext("POST "+paprika.SyncPath+"groceries/", 503) // Paprika stores nothing
 	h.fails("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}, "upstream_unavailable")
 	c := h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true})
 	if !c.Verified || h.posts("groceries") != 2 || h.serverRows("groceries", "ingredient", "oat milk") != 1 {

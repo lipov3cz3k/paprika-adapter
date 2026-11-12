@@ -3,7 +3,11 @@
 Paprika publishes no API. Everything below is reverse-engineered by other people
 and re-checked only as far as stated. Treat it as unstable.
 
-Scope: **Paprika 3** cloud sync only (`/api/v2/sync/*` plus the `/api/v1/account/login/` login).
+Scope: **Paprika 3 and 4** cloud sync (`/api/v3/sync/*`, before 2026-11-12 `/api/v2/sync/*`, plus the
+`/api/v1/account/login/` login).
+Paprika 4 (released 2026-11-06) is an in-place update of Paprika 3 on the same account. It syncs through
+`/api/v3/sync/*`, which serves the same rows as v2 plus new collections (pantry locations, cookbooks, saved
+searches); see [Paprika 4](#paprika-4-endpoint-inventory).
 Paprika 1/2 formats and `.paprikarecipes` files are not supported.
 
 ## Verified against a real account
@@ -59,11 +63,15 @@ Still to do:
 | **T** | Described in `aarons22/paprika-tools` `API_REFERENCE.md` at `361b495`; its author reports live checks (meal writes: 2026-06-29) |
 | **L** | Observed by this project against `www.paprikaapp.com` on 2026-10-08, without an account |
 | **A** | Observed on a real account, see [Verified against a real account](#verified-against-a-real-account) |
+| **B** | Path known to the Paprika 4.0.22 macOS app, noted on 2026-11-12. Proves the app knows a path, not what it sends or gets back |
 | **I** | Inferred from the above; nobody has confirmed it |
 
 Fixture tests in this repo prove the adapter matches the shapes below. They prove nothing about Paprika.
 
 ## Operations
+
+The paths below were captured on v2. Since 2026-11-12 the adapter sends the same requests to `/api/v3/sync/`;
+for reads both answer identically (A), for writes see [Paprika 4](#paprika-4-endpoint-inventory).
 
 | # | Operation | Request | Evidence | On a real account |
 |---|---|---|---|---|
@@ -88,6 +96,73 @@ Fixture tests in this repo prove the adapter matches the shapes below. They prov
 | 19 | Remove pantry items | `POST /sync/pantry/` with each whole existing row and `deleted: true` | C (soft delete) | **A** 2026-10-10 |
 
 Both `www.paprikaapp.com` and `paprikaapp.com` answered identically (L). The adapter uses `www`.
+
+## Paprika 4 endpoint inventory
+
+Paprika 4 shipped on 2026-11-06 as an update of Paprika 3, not a separate app: the macOS bundle id is still
+`com.hindsightlabs.paprika.mac.v3`, the Android package is still `…paprika.android.v3`, and Paprika's help says one
+account is used from "any version of Paprika". Owners of Paprika 3 get the Standard tier with cloud sync for free.
+
+The app list below (B) is from Paprika 4.0.22 for macOS (build 70). The app puts an API version in front of every
+path. A live check (A, 2026-11-12, below) settled which one: **Paprika 4 syncs through `/api/v3/sync/`**.
+`/api/v2/sync/` still answers for every collection Paprika 3 knew, with identical rows; the new collections exist
+only under v3. Login stays `/api/v1/account/login/` and its token works on v2 and v3.
+
+Server: `www.paprikaapp.com` (the app also knows `dev.paprikaapp.com`, not used by the adapter).
+
+| Path (after `/api/v3/`, login after `/api/v1/`) | In the adapter's operations above | Paprika 4 app (B) | Notes |
+|---|---|---|---|
+| `account/login/` | 1 | yes | |
+| `account/…` (other) | | yes, a bare `account/` prefix | account management; not looked at |
+| `sync/status/` | 4 | yes | |
+| `sync/recipes/`, `sync/recipe/{uid}/` | 5, 6, 16 | yes | |
+| `sync/categories/` | 8 | yes | |
+| `sync/photos/`, `sync/photo/{uid}/` | 13, 14 | yes | |
+| `sync/meals/`, `sync/mealtypes/` | 8, 10, 17 | yes | |
+| `sync/grocerylists/`, `sync/groceries/`, `sync/groceryaisles/`, `sync/groceryingredients/` | 8, 9 | yes | |
+| `sync/pantry/` | 8, 11, 18, 19 | yes | rows carry `location_uid` and `notes` (A) |
+| `sync/menus/`, `sync/menuitems/` | | yes | existed in Paprika 3 (`mcp-paprika` uses them); not implemented here |
+| `sync/bookmarks/` | | yes | existed in Paprika 3; not implemented here |
+| `sync/notify/` | | yes | the apps call it after recipe deletes; see the table below |
+| **`sync/pantrylocations/`** | | **new in 4**; A: v3 only | pantry locations (fridge, freezer, cupboard). Rows `{uid, name, order_flag, is_default}`; the account checked has one, `Pantry`, default, with a lowercase server-style uid. `pantry.location_uid` presumably points here. |
+| **`sync/cookbooks/`** | | **new in 4**; A: v3 only | cookbooks. Rows `{uid, name, order_flag, is_default, created, owner_uid, shared_uid, shared_name}`; one default `My Cookbook` on the account checked. `recipes.cookbook_uid` and `categories.cookbook_uid` presumably point here, but were still `null` on every row on 2026-11-12. |
+| **`sync/recipesearches/`** | | **new in 4**; A: v3 only | saved searches (Standard tier and up); empty on the account checked, so its fields are unknown |
+| **`family/list/`, `family/invite/`, `family/remove/`** | | **new in 4** | family accounts (Premium) |
+| **`messages/list/`, `messages/send/`** | | **new in 4** | direct messages between users (Premium) |
+| **`ws://www.paprikaapp.com/socket/`** | | **new in 4** | a websocket, most likely change notifications. Note the plain `ws://`; the app's `Info.plist` also sets `NSAllowsArbitraryLoads` |
+
+The app's data model has these synced types: `Bookmark`, `Cookbook`, `GroceryAisle`,
+`GroceryItem`, `GroceryList`, `Meal`, `MealType`, `Menu`, `MenuItem`, `PantryItem`, `PantryLocation`, `Recipe`,
+`RecipeCategory`. The two new ones match the two new sync collections.
+
+### Checked on a real account (A, 2026-11-12)
+
+Account in use by Paprika 4.0.22 (macOS). Read-only requests only.
+
+| Check | Result |
+|---|---|
+| `paprika-adapter verify` (all on v2) | every operation `ok`, no field drift: 39 recipes, 12 categories, 4 meal types, 24 aisles, 1 grocery ingredient, 1 grocery list, 15 grocery items, 0 pantry items, 17 meals, 7 photos |
+| `GET /api/v2/sync/status/` | 16 counters, including `pantrylocations`, `cookbooks`, `recipesearches`, `menus`, `menuitems` and `bookmarks` |
+| `GET /api/v3/sync/status/` | the same 16 counters |
+| `GET /api/v2/sync/{pantrylocations,cookbooks,recipesearches}/` | HTTP 200 with `{"error":{"message":"Not found."}}` |
+| `GET /api/v3/sync/{pantrylocations,cookbooks,recipesearches}/` | `result` arrays, shapes in the table above |
+| Every Paprika 3 collection, v2 against v3 | same uids, same field sets, same values; only `photo_url` differs, a signed link minted per request |
+| `GET /api/v1/sync/status/`, `/api/v1/sync/pantry/` | `Invalid or expired credentials.` (v1 sync does not take this token) |
+| `GET /api/v4/sync/…` | `Not found.` |
+
+Counters are not row counts: `pantrylocations` is 2 with one row, `mealtypes` 52 with four.
+
+What this means for the adapter:
+
+- Nothing it reads changed. Reading the old collections from v2 or v3 gives the same data.
+- `pantrylocations` (and `cookbooks`, `recipesearches`) must be read from v3, so the adapter moved to v3 as a
+  whole (`paprika.SyncPath`): it talks the way the Paprika 4 apps do. `verify` against v3 passed on 2026-11-12
+  with the same rows and no drift.
+- Writes on v3 are untested. Whether v3 accepts the v2 write envelope, and whether a pantry row posted with a
+  `location_uid` keeps it, needs the integration tests.
+- Edits and removals post back the whole row as read, so they keep `location_uid`, `notes` and `cookbook_uid`.
+  Creating a pantry item sends neither field, so a new item has no location (and the app presumably shows it
+  under the default one).
 
 ## Facts the design depends on
 

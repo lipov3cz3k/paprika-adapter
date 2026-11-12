@@ -175,7 +175,7 @@ func TestHTTPClientReadsAndWritesWithApproval(t *testing.T) {
 			proposed := call("propose_grocery_items", map[string]any{"list_uid": defaultList, "items": []any{map[string]any{"name": "oat milk"}}})
 			id := proposed["proposal"].(map[string]any)["proposal_id"]
 			committed := call("commit_proposal", map[string]any{"proposal_id": id, "confirm": true})
-			if committed["status"] != "committed" || committed["verified"] != true || len(prompts) != 1 || s.fake.Hits("POST /api/v2/sync/groceries/") != 1 {
+			if committed["status"] != "committed" || committed["verified"] != true || len(prompts) != 1 || s.fake.Hits("POST "+paprika.SyncPath+"groceries/") != 1 {
 				t.Fatalf("commit = %v, prompts = %q", committed, prompts)
 			}
 			logs := s.logs.String()

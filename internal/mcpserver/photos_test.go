@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pavel-alay/paprika-adapter/internal/paprika"
 	"github.com/pavel-alay/paprika-adapter/internal/paprikatest"
 )
 
@@ -33,7 +34,7 @@ func TestThumbnailIsReturnedAsAnImage(t *testing.T) {
 	h := newHarness(t, false)
 	h.ok("get_recipe", map[string]any{"uid": soupUID}) // fills the cache, with a link that will be stale
 	h.fake.ExpirePhotoLinks()
-	before := h.fake.Hits("GET /api/v2/sync/recipe/" + soupUID)
+	before := h.fake.Hits("GET " + paprika.SyncPath + "recipe/" + soupUID)
 
 	r := h.ok("get_recipe_photo", map[string]any{"uid": soupUID})
 	if len(r.Images) != 1 || !bytes.Equal(r.Images[0], paprikatest.Thumbnail) {
@@ -47,7 +48,7 @@ func TestThumbnailIsReturnedAsAnImage(t *testing.T) {
 	if !strings.Contains(r.Text, `"mime_type":"image/jpeg"`) {
 		t.Fatalf("no text copy of the result next to the image: %q", r.Text)
 	}
-	if h.fake.Hits("GET /api/v2/sync/recipe/"+soupUID)-before != 1 {
+	if h.fake.Hits("GET "+paprika.SyncPath+"recipe/"+soupUID)-before != 1 {
 		t.Fatal("the photo was not fetched through a freshly issued link")
 	}
 	for _, leak := range []string{"Signature", "fixture-signature", "Expires="} {

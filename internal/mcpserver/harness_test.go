@@ -223,7 +223,7 @@ func (h *harness) fails(name string, args map[string]any, code string) reply {
 }
 
 func (h *harness) posts(collection string) int {
-	return h.fake.Hits("POST /api/v2/sync/" + collection + "/")
+	return h.fake.Hits("POST " + paprika.SyncPath + collection + "/")
 }
 
 func (h *harness) serverRows(collection, field string, value any) int {

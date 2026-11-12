@@ -32,6 +32,10 @@ const (
 	Password = "fixture-password-do-not-log"
 )
 
+// syncPath is where Paprika 4 serves its sync API. It is written out here, not
+// taken from the client, so that a wrong path in the client fails the tests.
+const syncPath = "/api/v3/sync/"
+
 var (
 	collections = []string{
 		"categories", "pantry", "meals", "mealtypes", "grocerylists", "groceries", "groceryaisles", "groceryingredients", "photos",
@@ -329,7 +333,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		s.servePhoto(w, r)
 		return
 	}
-	rest, ok := strings.CutPrefix(r.URL.Path, "/api/v2/sync/")
+	rest, ok := strings.CutPrefix(r.URL.Path, syncPath)
 	if !ok {
 		fail(w, http.StatusNotFound, "Not found.")
 		return

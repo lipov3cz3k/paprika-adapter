@@ -20,7 +20,7 @@ const (
 // PhotoLink asks Paprika for a download link to one gallery photo. The link is
 // signed and expires within minutes, so it is requested when the image is needed.
 func (c *Client) PhotoLink(ctx context.Context, photoUID string) (string, error) {
-	path := syncPath + "photo/" + url.PathEscape(photoUID) + "/"
+	path := SyncPath + "photo/" + url.PathEscape(photoUID) + "/"
 	res, err := c.call(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return "", err

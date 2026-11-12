@@ -232,7 +232,7 @@ func checkNewUID(op, uid string) error {
 
 // upsert posts rows to a collection endpoint as a JSON array.
 func (c *Client) upsert(ctx context.Context, col Collection, rows any) error {
-	return c.postData(ctx, syncPath+string(col)+"/", "file", rows)
+	return c.postData(ctx, SyncPath+string(col)+"/", "file", rows)
 }
 
 // postData posts payload the only way Paprika accepts a write: gzipped JSON in

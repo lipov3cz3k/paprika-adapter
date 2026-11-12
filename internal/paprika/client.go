@@ -1,5 +1,6 @@
-// Package paprika is a client for the unofficial Paprika 3 cloud sync API (v2 sync
-// endpoints plus the v1 login). It knows nothing about the cache or MCP.
+// Package paprika is a client for the unofficial Paprika cloud sync API: the v3 sync
+// endpoints of Paprika 4 (a superset of Paprika 3's v2) plus the v1 login. It knows
+// nothing about the cache or MCP.
 package paprika
 
 import (
@@ -23,7 +24,9 @@ const (
 	DefaultBaseURL = "https://www.paprikaapp.com"
 
 	loginPath = "/api/v1/account/login/"
-	syncPath  = "/api/v2/sync/"
+	// SyncPath is the prefix of every sync endpoint. Paprika 4 uses v3; v2 still serves
+	// the Paprika 3 collections with identical rows but not the ones Paprika 4 added.
+	SyncPath = "/api/v3/sync/"
 
 	maxResponseBytes = 64 << 20
 	readAttempts     = 3
@@ -114,8 +117,8 @@ func (c *Client) Host() string {
 
 // Status returns Paprika's per-collection change counters.
 func (c *Client) Status(ctx context.Context) (map[string]int64, error) {
-	op := "GET " + syncPath + "status/"
-	res, err := c.call(ctx, http.MethodGet, syncPath+"status/", nil)
+	op := "GET " + SyncPath + "status/"
+	res, err := c.call(ctx, http.MethodGet, SyncPath+"status/", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +131,7 @@ func (c *Client) Status(ctx context.Context) (map[string]int64, error) {
 
 // List returns every row of a collection.
 func (c *Client) List(ctx context.Context, col Collection) ([]Raw, error) {
-	path := syncPath + string(col) + "/"
+	path := SyncPath + string(col) + "/"
 	res, err := c.call(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
@@ -138,7 +141,7 @@ func (c *Client) List(ctx context.Context, col Collection) ([]Raw, error) {
 
 // RecipeRefs returns the uid and content hash of every recipe in the account.
 func (c *Client) RecipeRefs(ctx context.Context) ([]RecipeRef, error) {
-	path := syncPath + "recipes/"
+	path := SyncPath + "recipes/"
 	res, err := c.call(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
@@ -157,17 +160,17 @@ func (c *Client) RecipeRefs(ctx context.Context) ([]RecipeRef, error) {
 
 // Recipe fetches one full recipe.
 func (c *Client) Recipe(ctx context.Context, uid string) (Raw, error) {
-	path := syncPath + "recipe/" + url.PathEscape(uid) + "/"
+	path := SyncPath + "recipe/" + url.PathEscape(uid) + "/"
 	res, err := c.call(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return Raw{}, err
 	}
-	rows, err := decodeRows("GET "+syncPath+"recipe/{uid}/", append(append([]byte("["), res...), ']'))
+	rows, err := decodeRows("GET "+SyncPath+"recipe/{uid}/", append(append([]byte("["), res...), ']'))
 	if err != nil {
 		return Raw{}, err
 	}
 	if rows[0].UID != uid {
-		return Raw{}, &Error{Kind: KindProtocol, Op: "GET " + syncPath + "recipe/{uid}/", Status: http.StatusOK, Message: "recipe uid does not match the requested uid"}
+		return Raw{}, &Error{Kind: KindProtocol, Op: "GET " + SyncPath + "recipe/{uid}/", Status: http.StatusOK, Message: "recipe uid does not match the requested uid"}
 	}
 	return rows[0], nil
 }
@@ -309,11 +312,11 @@ func (c *Client) send(ctx context.Context, method, path string, b *body, token s
 
 // opPath hides entity uids so error messages and logs stay uniform.
 func opPath(path string) string {
-	if rest, ok := strings.CutPrefix(path, syncPath+"recipe/"); ok && rest != "" {
-		return syncPath + "recipe/{uid}/"
+	if rest, ok := strings.CutPrefix(path, SyncPath+"recipe/"); ok && rest != "" {
+		return SyncPath + "recipe/{uid}/"
 	}
-	if rest, ok := strings.CutPrefix(path, syncPath+"photo/"); ok && rest != "" {
-		return syncPath + "photo/{uid}/"
+	if rest, ok := strings.CutPrefix(path, SyncPath+"photo/"); ok && rest != "" {
+		return SyncPath + "photo/{uid}/"
 	}
 	return path
 }

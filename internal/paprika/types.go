@@ -176,7 +176,8 @@ func DecodeAll[T any](raws []json.RawMessage) ([]T, error) {
 }
 
 // knownFields is the field set each endpoint returned when this client was written
-// (Paprika 3 sync API v2). It exists only to detect drift, see Drift.
+// (Paprika 3 sync API v2; v3 returned the same fields on 2026-11-12). It exists only
+// to detect drift, see Drift.
 var knownFields = map[string][]string{
 	Recipes: {
 		"uid", "name", "ingredients", "directions", "description", "notes", "nutritional_info", "servings",

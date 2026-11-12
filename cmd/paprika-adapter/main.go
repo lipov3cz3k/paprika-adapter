@@ -1,4 +1,4 @@
-// Command paprika-adapter serves one household's Paprika 3 account to MCP
+// Command paprika-adapter serves one household's Paprika (3 or 4) account to MCP
 // clients over HTTP with bearer-token authentication, backed by a local SQLite cache.
 package main
 

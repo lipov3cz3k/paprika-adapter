@@ -97,9 +97,9 @@ func TestOnlyChangedRecipeIsFetched(t *testing.T) {
 		t.Fatal("fixture unexpectedly matches saffron")
 	}
 	h.fake.UpdateRecipe("014031E3-BC74-4CA8-B345-36EBE9C9794B", "notes", "add a pinch of saffron")
-	before := h.fake.Hits("GET /api/v2/sync/recipe/")
+	before := h.fake.Hits("GET " + paprika.SyncPath + "recipe/")
 	h.refresh(t)
-	if fetched := h.fake.Hits("GET /api/v2/sync/recipe/") - before; fetched != 1 {
+	if fetched := h.fake.Hits("GET "+paprika.SyncPath+"recipe/") - before; fetched != 1 {
 		t.Fatalf("recipes fetched = %d, want 1", fetched)
 	}
 	if h.search(t, "saffron") != 1 {
@@ -123,9 +123,9 @@ func TestOnlyChangedCollectionIsRefetched(t *testing.T) {
 	h := newHarness(t, paprikatest.Password)
 	h.refresh(t)
 	h.fake.Put("pantry", map[string]any{"uid": "NEW-PANTRY-ITEM", "ingredient": "Paprika", "in_stock": true})
-	before, beforePantry := h.fake.Hits("GET "), h.fake.Hits("GET /api/v2/sync/pantry/")
+	before, beforePantry := h.fake.Hits("GET "), h.fake.Hits("GET "+paprika.SyncPath+"pantry/")
 	report := h.refresh(t)
-	if h.fake.Hits("GET /api/v2/sync/pantry/")-beforePantry != 1 || h.fake.Hits("GET ")-before != 2 {
+	if h.fake.Hits("GET "+paprika.SyncPath+"pantry/")-beforePantry != 1 || h.fake.Hits("GET ")-before != 2 {
 		t.Fatalf("requests = %d, want status + pantry only", h.fake.Hits("GET ")-before)
 	}
 	if report["pantry"].Rows != 9 {
@@ -137,9 +137,9 @@ func TestCountersAreNotTrustedForever(t *testing.T) {
 	h := newHarness(t, paprikatest.Password)
 	h.refresh(t)
 	h.now = h.now.Add(h.sync.CounterTrust + time.Minute)
-	before := h.fake.Hits("GET /api/v2/sync/meals/")
+	before := h.fake.Hits("GET " + paprika.SyncPath + "meals/")
 	h.refresh(t)
-	if h.fake.Hits("GET /api/v2/sync/meals/")-before != 1 {
+	if h.fake.Hits("GET "+paprika.SyncPath+"meals/")-before != 1 {
 		t.Fatal("meals were not re-downloaded after the counter trust window")
 	}
 }
@@ -197,17 +197,17 @@ func TestRejectedCredentialsAreReportedAsAuthFailure(t *testing.T) {
 func TestInterruptedRecipeSyncResumes(t *testing.T) {
 	h := newHarness(t, paprikatest.Password)
 	h.sync.RecipeWorkers = 1
-	h.fake.FailNext("GET /api/v2/sync/recipe/3B9E1D42-6A7C-4F85-9D20-1C8E5A4B7F63/", 500, 500, 500)
+	h.fake.FailNext("GET "+paprika.SyncPath+"recipe/3B9E1D42-6A7C-4F85-9D20-1C8E5A4B7F63/", 500, 500, 500)
 	f := h.refresh(t)["recipes"]
 	if f.Rows != 5 || f.Error == nil || f.State != syncer.StateEmpty {
 		t.Fatalf("recipes = %+v (error %+v), want 5 cached, an error, and never_synced: the first copy is incomplete", f, f.Error)
 	}
-	before := h.fake.Hits("GET /api/v2/sync/recipe/")
+	before := h.fake.Hits("GET " + paprika.SyncPath + "recipe/")
 	f = h.refresh(t)["recipes"]
 	if f.Rows != 6 || f.Error != nil || f.State != syncer.StateFresh {
 		t.Fatalf("recipes after retry = %+v, want 6 and fresh", f)
 	}
-	if fetched := h.fake.Hits("GET /api/v2/sync/recipe/") - before; fetched != 1 {
+	if fetched := h.fake.Hits("GET "+paprika.SyncPath+"recipe/") - before; fetched != 1 {
 		t.Fatalf("retry fetched %d recipes, want only the missing one", fetched)
 	}
 }
@@ -272,13 +272,13 @@ func TestDriftRecordedByAnOlderBuildIsJudgedAgainAfterRestart(t *testing.T) {
 
 	restarted := syncer.New(h.sync.Client, h.store, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	restarted.Now = h.sync.Now
-	before := h.fake.Hits("GET /api/v2/sync/recipe") + h.fake.Hits("GET /api/v2/sync/categories/")
+	before := h.fake.Hits("GET "+paprika.SyncPath+"recipe") + h.fake.Hits("GET "+paprika.SyncPath+"categories/")
 	for _, f := range restarted.Refresh(ctx, paprika.Recipes, string(paprika.Categories)) {
 		if f.Drift != nil || f.State != syncer.StateFresh {
 			t.Errorf("%s after restart = %+v, want fresh without drift", f.Collection, f)
 		}
 	}
-	if after := h.fake.Hits("GET /api/v2/sync/recipe") + h.fake.Hits("GET /api/v2/sync/categories/"); after != before {
+	if after := h.fake.Hits("GET "+paprika.SyncPath+"recipe") + h.fake.Hits("GET "+paprika.SyncPath+"categories/"); after != before {
 		t.Fatalf("judging drift again downloaded %d time(s)", after-before)
 	}
 }
@@ -288,7 +288,7 @@ func TestFailedRecipeUpdateAfterAFullSyncIsStaleNotEmpty(t *testing.T) {
 	h := newHarness(t, paprikatest.Password)
 	h.refresh(t)
 	h.fake.UpdateRecipe(roastUID, "notes", "Use the convection setting.")
-	h.fake.FailNext("GET /api/v2/sync/recipe/"+roastUID+"/", 500, 500, 500)
+	h.fake.FailNext("GET "+paprika.SyncPath+"recipe/"+roastUID+"/", 500, 500, 500)
 	h.now = h.now.Add(time.Hour)
 	f := h.refresh(t)["recipes"]
 	if f.State != syncer.StateStale || f.Rows != 6 || f.Error == nil {

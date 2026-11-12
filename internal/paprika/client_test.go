@@ -118,11 +118,11 @@ func TestErrorSentAsHTTP200IsAnError(t *testing.T) {
 
 func TestReadsRetryTransientFailures(t *testing.T) {
 	fake := newFake(t)
-	fake.FailNext("GET /api/v2/sync/meals/", 503, 429)
+	fake.FailNext("GET "+paprika.SyncPath+"meals/", 503, 429)
 	if _, err := newClient(t, fake).List(context.Background(), paprika.Meals); err != nil {
 		t.Fatalf("list: %v", err)
 	}
-	if n := fake.Hits("GET /api/v2/sync/meals/"); n != 3 {
+	if n := fake.Hits("GET " + paprika.SyncPath + "meals/"); n != 3 {
 		t.Fatalf("attempts = %d, want 3", n)
 	}
 }
@@ -136,10 +136,10 @@ func TestReadsGiveUpAsUnavailable(t *testing.T) {
 
 func TestWritesAreSentOnce(t *testing.T) {
 	fake := newFake(t)
-	fake.FailNext("POST /api/v2/sync/groceries/", 503)
+	fake.FailNext("POST "+paprika.SyncPath+"groceries/", 503)
 	err := newClient(t, fake).AddGroceryItems(context.Background(), []paprika.NewGroceryItem{{UID: paprika.NewUID(), ListUID: "L", Name: "x"}})
 	wantKind(t, err, paprika.KindUnavailable)
-	if n := fake.Hits("POST /api/v2/sync/groceries/"); n != 1 {
+	if n := fake.Hits("POST " + paprika.SyncPath + "groceries/"); n != 1 {
 		t.Fatalf("POST attempts = %d, want 1", n)
 	}
 }

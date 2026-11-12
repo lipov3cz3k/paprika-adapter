@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pavel-alay/paprika-adapter/internal/paprika"
 	"github.com/pavel-alay/paprika-adapter/internal/paprikatest"
 	"github.com/pavel-alay/paprika-adapter/internal/syncer"
 )
@@ -261,7 +262,7 @@ func TestSecretsNeverReachRepliesOrLogs(t *testing.T) {
 // were the whole collection: "no match" would be a wrong answer.
 func TestIncompleteFirstSyncIsNotAnsweredFrom(t *testing.T) {
 	h := newHarness(t, false)
-	h.fake.FailNext("GET /api/v2/sync/recipe/"+roastUID+"/", 500, 500, 500)
+	h.fake.FailNext("GET "+paprika.SyncPath+"recipe/"+roastUID+"/", 500, 500, 500)
 	r := h.fails("search_recipes", map[string]any{"query": "lentil"}, "upstream_unavailable")
 	if !r.Error.Retryable || len(r.Recipes) != 0 {
 		t.Fatalf("error = %+v, recipes = %v", r.Error, r.Recipes)

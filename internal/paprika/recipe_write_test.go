@@ -54,7 +54,7 @@ func TestWriteRecipeSendsTheWholeRecipeBack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fake.Hits("POST /api/v2/sync/recipe/"+uid+"/") != 1 || fake.Hits("POST /api/v2/sync/recipes/") != 0 {
+	if fake.Hits("POST "+paprika.SyncPath+"recipe/"+uid+"/") != 1 || fake.Hits("POST "+paprika.SyncPath+"recipes/") != 0 {
 		t.Fatal("the recipe was not posted once to its own URL")
 	}
 	var body map[string]any

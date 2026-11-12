@@ -76,7 +76,7 @@ func New(d Deps) *mcp.Server {
 		asked = "This server asks for no approval: commit what the user asked for without asking them again, and tell them what was written."
 		commit = "Write a proposal to Paprika, then read it back to verify. No approval is asked for. "
 	}
-	instructions := "Read-only view of one household's Paprika 3 account (recipes, pantry, meal plan, grocery lists) " +
+	instructions := "Read-only view of one household's Paprika account (recipes, pantry, meal plan, grocery lists) " +
 		"served from a local cache. Every result carries a sync block: treat state=stale as possibly outdated and say so."
 	if s.writes {
 		instructions += " " + flow +

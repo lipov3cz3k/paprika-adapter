@@ -22,6 +22,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/pavel-alay/paprika-adapter/internal/paprika"
 	"github.com/pavel-alay/paprika-adapter/internal/paprikatest"
 )
 
@@ -71,7 +72,7 @@ func run(adapter string, live, yes, raw bool, query, listName string, maxItems i
 		cmd.Env = append(cmd.Env, "PAPRIKA_BASE_URL="+fake.URL, "PAPRIKA_EMAIL="+paprikatest.Email,
 			"PAPRIKA_PASSWORD="+paprikatest.Password, "PAPRIKA_DATA_DIR="+dir, "PAPRIKA_LOG_LEVEL=warn")
 		defer func() {
-			fmt.Printf("\nFake Paprika saw %d grocery write request(s) in total.\n", fake.Hits("POST /api/v2/sync/groceries/"))
+			fmt.Printf("\nFake Paprika saw %d grocery write request(s) in total.\n", fake.Hits("POST "+paprika.SyncPath+"groceries/"))
 		}()
 		fmt.Println("Backend: built-in fake Paprika (synthetic fixtures), not a real account.")
 	} else {

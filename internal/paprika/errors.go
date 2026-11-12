@@ -21,7 +21,7 @@ const (
 // headers, bodies, tokens or credentials.
 type Error struct {
 	Kind    Kind
-	Op      string // e.g. "GET /api/v2/sync/meals/"
+	Op      string // e.g. "GET /api/v3/sync/meals/"
 	Status  int    // HTTP status, 0 if the request never completed
 	Message string
 	Err     error
