@@ -134,8 +134,11 @@ type reply struct {
 	Items  []item
 	Pantry []item `json:"pantry_items"`
 
-	PantryBefore  []mcpserver.PantryEntry `json:"pantry_before"`
-	PantryRemoved []mcpserver.PantryEntry `json:"pantry_removed"`
+	PantryBefore  []mcpserver.PantryEntry  `json:"pantry_before"`
+	PantryRemoved []mcpserver.PantryEntry  `json:"pantry_removed"`
+	GroceryBefore []mcpserver.GroceryEntry `json:"grocery_before"`
+	GroceryGone   []mcpserver.GroceryEntry `json:"grocery_removed"`
+	MealsRemoved  []mcpserver.MealEntry    `json:"meals_removed"`
 	Lists         []mcpserver.GroceryListEntry
 	List          *mcpserver.NamedRef
 	From, To      string

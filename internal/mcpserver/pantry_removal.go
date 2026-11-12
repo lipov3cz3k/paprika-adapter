@@ -14,8 +14,9 @@ type ProposePantryRemovalIn struct {
 }
 
 func (s *server) proposePantryRemoval(ctx context.Context, in ProposePantryRemovalIn, out *ProposeOut) *ToolError {
-	if len(in.ItemUIDs) == 0 || len(in.ItemUIDs) > maxPantryItems {
-		return invalid(fmt.Sprintf("item_uids must hold 1 to %d entries; get them from list_pantry", maxPantryItems))
+	uids, terr := uidList("item_uids", in.ItemUIDs, maxPantryItems, "list_pantry")
+	if terr != nil {
+		return terr
 	}
 	if terr := s.ensureFresh(ctx, &out.Meta, string(paprika.Pantry)); terr != nil {
 		return terr
@@ -26,16 +27,7 @@ func (s *server) proposePantryRemoval(ctx context.Context, in ProposePantryRemov
 	}
 	var p payload
 	var lines []string
-	seen := map[string]bool{}
-	for i, raw := range in.ItemUIDs {
-		uid := strings.TrimSpace(raw)
-		if uid == "" {
-			return invalid(fmt.Sprintf("item_uids[%d] is empty", i))
-		}
-		if seen[uid] {
-			continue
-		}
-		seen[uid] = true
+	for _, uid := range uids {
 		item, ok := findPantry(existing, uid)
 		if !ok {
 			return notFound("no pantry item with uid " + uid + "; see list_pantry")
@@ -57,28 +49,12 @@ func (s *server) proposePantryRemoval(ctx context.Context, in ProposePantryRemov
 // commitPantryRemoval removes the proposed items that Paprika still holds and
 // checks that none of them is returned any more.
 func (s *server) commitPantryRemoval(ctx context.Context, p payload, out *CommitOut) *ToolError {
-	raws, _, terr := s.pullPantry(ctx)
-	if terr != nil {
+	rows := make([]removal, 0, len(p.PantryRemoval))
+	for _, it := range p.PantryRemoval {
+		rows = append(rows, removal{it.UID, it.Ingredient})
+	}
+	if _, terr := removeRows(ctx, s, paprika.Pantry, rows, nil, s.Client.RemovePantryItems); terr != nil {
 		return terr
-	}
-	var send []paprika.Raw
-	for _, it := range p.PantryRemoval {
-		if raw, present := raws[it.UID]; present { // an absent one is gone already, which is the goal
-			send = append(send, raw)
-		}
-	}
-	if len(send) > 0 {
-		if err := s.Client.RemovePantryItems(ctx, send); err != nil {
-			return writeFailed(err)
-		}
-		if raws, _, terr = s.pullPantry(ctx); terr != nil {
-			return notVerified(terr.Message)
-		}
-	}
-	for _, it := range p.PantryRemoval {
-		if _, present := raws[it.UID]; present {
-			return notVerified("Paprika accepted the removal but still returns " + it.Ingredient)
-		}
 	}
 	out.PantryRemoved = p.PantryRemoval
 	out.Sync = s.Sync.Freshness(ctx, string(paprika.Pantry))

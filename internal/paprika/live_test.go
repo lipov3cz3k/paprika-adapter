@@ -625,3 +625,139 @@ func liveFind(t *testing.T, c *Client, col Collection, uid string) (Raw, bool) {
 	}
 	return Raw{}, false
 }
+
+// TestLiveGroceryEdit creates its own item on the disposable test list, edits it
+// and ticks it off, checks what Paprika then returns, and removes it the way the
+// adapter removes items.
+func TestLiveGroceryEdit(t *testing.T) {
+	c := liveClient(t)
+	listUID := os.Getenv("PAPRIKA_IT_LIST_UID")
+	if listUID == "" {
+		t.Skip("PAPRIKA_IT_LIST_UID is not set")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	lists, err := c.List(ctx, GroceryLists)
+	if err != nil {
+		t.Fatal(err)
+	}
+	disposable := false
+	for _, raw := range lists {
+		if l, _ := Decode[GroceryList](raw.JSON); l.UID == listUID && strings.Contains(strings.ToLower(l.Name), "test") {
+			disposable = true
+		}
+	}
+	if !disposable {
+		t.Fatalf("list %s does not exist or its name does not contain \"test\"; refusing to write to it", listUID)
+	}
+
+	stamp := time.Now().UTC().Format(time.RFC3339)
+	item := NewGroceryItem{UID: NewUID(), ListUID: listUID, Name: "[adapter-it] " + stamp, Ingredient: "[adapter-it] " + stamp}
+	if err := c.AddGroceryItems(ctx, []NewGroceryItem{item}); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	removed := false
+	t.Cleanup(func() {
+		if removed {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		if err := c.upsert(ctx, Groceries, []groceryWire{{NewGroceryItem: item, Deleted: true}}); err != nil {
+			t.Errorf("CLEANUP FAILED, delete %q from the list by hand: %v", item.Name, err)
+		}
+	})
+	created, found := liveFind(t, c, Groceries, item.UID)
+	if !found {
+		t.Fatal("the new item is not returned")
+	}
+
+	qty, renamed, note, bought := "2 tests", item.Ingredient+" edited", "adapter note", true
+	line := qty + " " + renamed
+	edit := GroceryEdit{Name: &line, Ingredient: &renamed, Quantity: &qty, Instruction: &note, Purchased: &bought}
+	if err := c.EditGroceryItems(ctx, []GroceryRowEdit{{Current: created, Edit: edit}}); err != nil {
+		t.Fatalf("edit: %v", err)
+	}
+	edited, found := liveFind(t, c, Groceries, item.UID)
+	if !found {
+		t.Fatal("the edited item is not returned")
+	}
+	got, err := Decode[GroceryItem](edited.JSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != line || got.Ingredient != renamed || got.Quantity != qty || got.Instruction != note || !got.Purchased || got.ListUID != listUID {
+		t.Fatalf("read back %s", edited.JSON)
+	}
+	var before, after map[string]json.RawMessage
+	_ = json.Unmarshal(created.JSON, &before)
+	_ = json.Unmarshal(edited.JSON, &after)
+	for field, old := range before {
+		switch field {
+		case "name", "ingredient", "quantity", "instruction", "purchased":
+			continue
+		}
+		if string(after[field]) != string(old) {
+			t.Errorf("%s changed from %s to %s", field, old, after[field])
+		}
+	}
+	if len(after) != len(before) {
+		t.Errorf("the row had %d fields and now has %d", len(before), len(after))
+	}
+
+	if err := c.RemoveGroceryItems(ctx, []Raw{edited}); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+	if _, found := liveFind(t, c, Groceries, item.UID); found {
+		t.Fatalf("removed item %q is still returned; delete it by hand", line)
+	}
+	removed = true
+}
+
+// TestLiveMealRemoval creates its own meal-plan entry and removes it the way the adapter removes entries.
+func TestLiveMealRemoval(t *testing.T) {
+	c := liveClient(t)
+	date := os.Getenv("PAPRIKA_IT_MEAL_DATE")
+	if date == "" {
+		t.Skip("PAPRIKA_IT_MEAL_DATE is not set")
+	}
+	if _, err := time.Parse("2006-01-02", date); err != nil {
+		t.Fatalf("PAPRIKA_IT_MEAL_DATE: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	types, err := c.List(ctx, MealTypes)
+	if err != nil || len(types) == 0 {
+		t.Fatalf("meal types: %d rows, err %v", len(types), err)
+	}
+	first, _ := Decode[MealType](types[0].JSON)
+	meal := NewMeal{UID: NewUID(), Name: "[adapter-it] " + time.Now().UTC().Format(time.RFC3339), Date: date + " 00:00:00", TypeUID: first.UID}
+	if first.OriginalType != nil {
+		meal.Type = *first.OriginalType
+	}
+	if err := c.AddMeal(ctx, meal); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	removed := false
+	t.Cleanup(func() {
+		if removed {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		if err := c.upsert(ctx, Meals, []mealWire{{NewMeal: meal, Deleted: true}}); err != nil {
+			t.Errorf("CLEANUP FAILED, delete %q on %s by hand: %v", meal.Name, date, err)
+		}
+	})
+	created, found := liveFind(t, c, Meals, meal.UID)
+	if !found {
+		t.Fatal("the new meal is not returned")
+	}
+	if err := c.RemoveMeals(ctx, []Raw{created}); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+	if _, found := liveFind(t, c, Meals, meal.UID); found {
+		t.Fatalf("removed meal %q is still returned; delete it by hand", meal.Name)
+	}
+	removed = true
+}

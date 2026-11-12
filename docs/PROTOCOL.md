@@ -11,7 +11,8 @@ Paprika 1/2 formats and `.paprikarecipes` files are not supported.
 **Reads: verified on 2026-10-09**, first from the cache a full sync
 produced, then with the live integration test (`TestLiveReads`, passed). The apps in use were
 Paprika 3.8.4. **Writes: the three create-only writes and the meal-plan edit verified on the same day** with the live
-integration tests, **the pantry edit and removal on 2026-10-10**. The recipe edit is not verified yet.
+integration tests, **the pantry edit and removal on 2026-10-10**, **the grocery edit, check-off and removal and
+the meal-plan removal on 2026-11-13**. The recipe edit is not verified yet.
 
 | Write | Result on 2026-10-09 |
 |---|---|
@@ -21,6 +22,8 @@ integration tests, **the pantry edit and removal on 2026-10-10**. The recipe edi
 | Grocery items (`TestLiveGroceryWrite`) | passed against the list `adapter-test`: one item was accepted, returned by `GET /sync/groceries/` with the same name and list, unpurchased; posting the same uid again left exactly one row; gone after the soft delete |
 | Pantry items (`TestLivePantryWrite`) | passed: one item with a quantity and an expiration date was accepted and returned by `GET /sync/pantry/` with the same values, in stock; posting the same uid again left exactly one row; gone after the soft delete. The returned row has the 11 expected fields, which also settles the pantry field set below |
 | Pantry edit and removal (`TestLivePantryEdit`, 2026-10-10) | passed: an item the test created itself was renamed, given another quantity, marked out of stock and given an expiration and a purchase date by posting its whole row again under the same uid; Paprika returned the changed row with every other field as before. Posting it with `has_expiration: false`, `expiration_date: null` removed the expiration date. Posting the whole row with `deleted: true` made `GET /sync/pantry/` stop returning it |
+| Grocery edit and removal (`TestLiveGroceryEdit`, 2026-11-13) | passed against the list `testovací seznam`: an item the test created itself was given another name, ingredient, quantity and note and ticked off by posting its whole row again under the same uid; Paprika returned the changed row, on the same list, with every other field as before and no field added or lost. Posting the whole read row with `deleted: true` made `GET /sync/groceries/` stop returning it |
+| Meal-plan removal (`TestLiveMealRemoval`, 2026-11-13) | passed: an entry the test created itself on 2027-12-31 was read back and posted whole with `deleted: true`; `GET /sync/meals/` stopped returning it |
 | Aisle of a new grocery item | sent `aisle: ""`, `aisle_uid: null`; Paprika stored and returned exactly that, it does not assign an aisle itself. Where the apps display such an item has not been looked at |
 
 | Collection | Rows | Result |
@@ -86,6 +89,9 @@ Fixture tests in this repo prove the adapter matches the shapes below. They prov
 | 17 | Edit a meal-plan entry | `POST /sync/meals/` with the whole existing row under its uid, changed fields overwritten | C (whole-object upsert) | **A** 2026-10-09 |
 | 18 | Edit a pantry item | `POST /sync/pantry/` with the whole existing row under its uid, changed fields overwritten | C (whole-object upsert) | **A** 2026-10-10 |
 | 19 | Remove pantry items | `POST /sync/pantry/` with each whole existing row and `deleted: true` | C (soft delete) | **A** 2026-10-10 |
+| 20 | Edit or tick off grocery items | `POST /sync/groceries/` with each whole existing row under its uid, changed fields (`name`, `ingredient`, `quantity`, `instruction`, `aisle`/`aisle_uid`, `list_uid`/`order_flag`, `purchased`) overwritten | C (whole-object upsert, as 17 and 18) | **A** 2026-11-13 (`TestLiveGroceryEdit`; moving to another list and setting an aisle not exercised) |
+| 21 | Remove grocery items | `POST /sync/groceries/` with each whole existing row and `deleted: true` | C (soft delete) | soft delete of a new item **A** 2026-10-09 (cleanup of `TestLiveGroceryWrite`); of a whole read row **A** 2026-11-13 (`TestLiveGroceryEdit`) |
+| 22 | Remove meal-plan entries | `POST /sync/meals/` with each whole existing row and `deleted: true` | C (soft delete) | soft delete of a new entry **A** 2026-10-09 (cleanup of `TestLiveMealWrite`); of a whole read row **A** 2026-11-13 (`TestLiveMealRemoval`) |
 
 Both `www.paprikaapp.com` and `paprikaapp.com` answered identically (L). The adapter uses `www`.
 

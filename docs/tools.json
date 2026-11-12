@@ -7,7 +7,7 @@
       "readOnlyHint": false,
       "title": "Commit proposal"
     },
-    "description": "Write a proposal to Paprika after the user approved it, then read it back to verify. If the client supports MCP elicitation the user is asked to approve the exact summary first. Safe to repeat: a retried commit never creates duplicates. Committing an edit overwrites the edited fields of that recipe, meal-plan entry or pantry item; committing a removal removes the named pantry items.",
+    "description": "Write a proposal to Paprika after the user approved it, then read it back to verify. If the client supports MCP elicitation the user is asked to approve the exact summary first. Safe to repeat: a retried commit never creates duplicates. Committing an edit or check-off overwrites the edited fields of that recipe, meal-plan entry, grocery item or pantry item; committing a removal removes the named rows.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -59,8 +59,8 @@
             "object"
           ]
         },
-        "items": {
-          "description": "the grocery items as read back from Paprika",
+        "grocery_before": {
+          "description": "for a grocery edit or check-off: the items as they were before",
           "items": {
             "additionalProperties": false,
             "properties": {
@@ -71,6 +71,10 @@
                 "type": "string"
               },
               "instruction": {
+                "type": "string"
+              },
+              "list_uid": {
+                "description": "uid of the grocery list the item is on",
                 "type": "string"
               },
               "name": {
@@ -98,6 +102,113 @@
             "required": [
               "uid",
               "name",
+              "list_uid",
+              "purchased"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "grocery_removed": {
+          "description": "the removed grocery items as they were; Paprika no longer returns them",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "aisle": {
+                "type": "string"
+              },
+              "ingredient": {
+                "type": "string"
+              },
+              "instruction": {
+                "type": "string"
+              },
+              "list_uid": {
+                "description": "uid of the grocery list the item is on",
+                "type": "string"
+              },
+              "name": {
+                "description": "the line as shown in Paprika, quantity included",
+                "type": "string"
+              },
+              "purchased": {
+                "type": "boolean"
+              },
+              "quantity": {
+                "type": "string"
+              },
+              "recipe": {
+                "description": "name of the recipe the item was added from, if any",
+                "type": "string"
+              },
+              "recipe_uid": {
+                "type": "string"
+              },
+              "uid": {
+                "description": "stable Paprika grocery item uid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "uid",
+              "name",
+              "list_uid",
+              "purchased"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "items": {
+          "description": "the grocery items as read back from Paprika",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "aisle": {
+                "type": "string"
+              },
+              "ingredient": {
+                "type": "string"
+              },
+              "instruction": {
+                "type": "string"
+              },
+              "list_uid": {
+                "description": "uid of the grocery list the item is on",
+                "type": "string"
+              },
+              "name": {
+                "description": "the line as shown in Paprika, quantity included",
+                "type": "string"
+              },
+              "purchased": {
+                "type": "boolean"
+              },
+              "quantity": {
+                "type": "string"
+              },
+              "recipe": {
+                "description": "name of the recipe the item was added from, if any",
+                "type": "string"
+              },
+              "recipe_uid": {
+                "type": "string"
+              },
+              "uid": {
+                "description": "stable Paprika grocery item uid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "uid",
+              "name",
+              "list_uid",
               "purchased"
             ],
             "type": "object"
@@ -108,7 +219,7 @@
           ]
         },
         "kind": {
-          "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+          "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
           "type": "string"
         },
         "list": {
@@ -206,6 +317,48 @@
           "type": [
             "null",
             "object"
+          ]
+        },
+        "meals_removed": {
+          "description": "the removed meal-plan entries as they were; Paprika no longer returns them",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "description": "YYYY-MM-DD",
+                "type": "string"
+              },
+              "meal_type": {
+                "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                "type": "string"
+              },
+              "meal_type_uid": {
+                "type": "string"
+              },
+              "name": {
+                "description": "recipe name, or the free text of a note-style entry",
+                "type": "string"
+              },
+              "recipe_uid": {
+                "description": "set when the entry points at a recipe; pass it to get_recipe",
+                "type": "string"
+              },
+              "uid": {
+                "description": "stable Paprika meal uid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "uid",
+              "date",
+              "meal_type",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
           ]
         },
         "ok": {
@@ -1394,6 +1547,10 @@
               "instruction": {
                 "type": "string"
               },
+              "list_uid": {
+                "description": "uid of the grocery list the item is on",
+                "type": "string"
+              },
               "name": {
                 "description": "the line as shown in Paprika, quantity included",
                 "type": "string"
@@ -1419,6 +1576,7 @@
             "required": [
               "uid",
               "name",
+              "list_uid",
               "purchased"
             ],
             "type": "object"
@@ -1965,56 +2123,37 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false,
-      "title": "Propose grocery items"
+      "title": "Propose grocery check-off"
     },
-    "description": "Prepare items to add to one grocery list. Writes nothing. Items already on the list (unpurchased, same name) are skipped unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.",
+    "description": "Prepare ticking grocery items off as bought, named by uid, or with undo=true putting them back on the list. Writes nothing. Returns a proposal_id, a summary, and the items before and after.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
-        "allow_duplicates": {
-          "description": "add items even if an unpurchased item with the same name is already on the list; default false",
+        "allow_duplicate": {
+          "description": "with undo: allow putting back an item that is on its list again, not yet purchased; default false",
           "type": "boolean"
         },
-        "items": {
-          "description": "1 to 25 items to add",
+        "item_uids": {
+          "description": "uids of the 1 to 25 grocery items to tick off, from list_grocery_items",
           "items": {
-            "additionalProperties": false,
-            "properties": {
-              "instruction": {
-                "description": "note shown with the item, e.g. the organic ones",
-                "type": "string"
-              },
-              "name": {
-                "description": "what to buy, without the amount, e.g. eggs",
-                "type": "string"
-              },
-              "quantity": {
-                "description": "amount as free text, e.g. 1 dozen or 500 g",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
+            "type": "string"
           },
           "type": [
             "null",
             "array"
           ]
         },
-        "list_uid": {
-          "description": "uid of the grocery list to add to, from list_grocery_lists; there is no default list",
-          "type": "string"
+        "undo": {
+          "description": "true puts the items back on the list as not bought instead; default false",
+          "type": "boolean"
         }
       },
       "required": [
-        "list_uid",
-        "items"
+        "item_uids"
       ],
       "type": "object"
     },
-    "name": "propose_grocery_items",
+    "name": "propose_grocery_check_off",
     "outputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -2054,6 +2193,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -2089,7 +2387,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -2188,6 +2486,1594 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, notes, description or directions",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose grocery check-off"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Propose grocery edit"
+    },
+    "description": "Prepare a change to ONE existing grocery item: what to buy, its quantity, its note, its aisle, which list it is on, or whether it is bought. Writes nothing. Returns a proposal_id, a summary, and the item before and after.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "aisle": {
+          "description": "move the item to this aisle, by name, e.g. Dairy; it must already exist in Paprika",
+          "type": "string"
+        },
+        "allow_duplicate": {
+          "description": "allow the result to repeat an unpurchased item already on that list; default false",
+          "type": "boolean"
+        },
+        "instruction": {
+          "description": "new note shown with the item; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "item_uid": {
+          "description": "uid of the grocery item to change, from list_grocery_items",
+          "type": "string"
+        },
+        "list_uid": {
+          "description": "move the item to this grocery list, from list_grocery_lists",
+          "type": "string"
+        },
+        "name": {
+          "description": "what to buy instead, without the amount, e.g. oat milk",
+          "type": "string"
+        },
+        "purchased": {
+          "description": "true ticks the item off as bought, false puts it back on the list",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "quantity": {
+          "description": "new amount as free text, e.g. 2 l; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "item_uid"
+      ],
+      "type": "object"
+    },
+    "name": "propose_grocery_edit",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, notes, description or directions",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose grocery edit"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Propose grocery items"
+    },
+    "description": "Prepare items to add to one grocery list. Writes nothing. Items already on the list (unpurchased, same name) are skipped unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_duplicates": {
+          "description": "add items even if an unpurchased item with the same name is already on the list; default false",
+          "type": "boolean"
+        },
+        "items": {
+          "description": "1 to 25 items to add",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "instruction": {
+                "description": "note shown with the item, e.g. the organic ones",
+                "type": "string"
+              },
+              "name": {
+                "description": "what to buy, without the amount, e.g. eggs",
+                "type": "string"
+              },
+              "quantity": {
+                "description": "amount as free text, e.g. 1 dozen or 500 g",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "list_uid": {
+          "description": "uid of the grocery list to add to, from list_grocery_lists; there is no default list",
+          "type": "string"
+        }
+      },
+      "required": [
+        "list_uid",
+        "items"
+      ],
+      "type": "object"
+    },
+    "name": "propose_grocery_items",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -2535,43 +4421,30 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false,
-      "title": "Propose meal plan edit"
+      "title": "Propose grocery removal"
     },
-    "description": "Prepare a change to ONE existing meal-plan entry: move it to another day, change its meal type, or plan a different recipe or text in its place. Writes nothing. Returns a proposal_id, a summary, and the entry before and after.",
+    "description": "Prepare the removal of grocery items: the ones named by uid, or every ticked-off item on one list. Writes nothing. To record that something was bought, use propose_grocery_check_off instead. Returns a proposal_id, a summary and the items that would be removed.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
-        "allow_duplicate": {
-          "description": "allow the result to repeat a recipe or text already planned for that day and meal type; default false",
-          "type": "boolean"
+        "item_uids": {
+          "description": "uids of the 1 to 25 grocery items to remove, from list_grocery_items; not together with purchased_on_list_uid",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
         },
-        "date": {
-          "description": "move the entry to this day, YYYY-MM-DD",
-          "type": "string"
-        },
-        "meal_type_uid": {
-          "description": "change the meal type; a uid from get_meal_plan.meal_types",
-          "type": "string"
-        },
-        "meal_uid": {
-          "description": "uid of the meal-plan entry to change, from get_meal_plan",
-          "type": "string"
-        },
-        "name": {
-          "description": "plan this free text, such as Leftovers, in place of what the entry has; not together with recipe_uid",
-          "type": "string"
-        },
-        "recipe_uid": {
-          "description": "plan this recipe in place of what the entry has; not together with name",
+        "purchased_on_list_uid": {
+          "description": "remove every item already ticked off on this grocery list, as Paprika's own clear-purchased does; not together with item_uids",
           "type": "string"
         }
       },
-      "required": [
-        "meal_uid"
-      ],
       "type": "object"
     },
-    "name": "propose_meal_plan_edit",
+    "name": "propose_grocery_removal",
     "outputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -2611,6 +4484,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -2646,7 +4678,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -2745,6 +4777,806 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, notes, description or directions",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose grocery removal"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Propose meal plan edit"
+    },
+    "description": "Prepare a change to ONE existing meal-plan entry: move it to another day, change its meal type, or plan a different recipe or text in its place. Writes nothing. Returns a proposal_id, a summary, and the entry before and after.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_duplicate": {
+          "description": "allow the result to repeat a recipe or text already planned for that day and meal type; default false",
+          "type": "boolean"
+        },
+        "date": {
+          "description": "move the entry to this day, YYYY-MM-DD",
+          "type": "string"
+        },
+        "meal_type_uid": {
+          "description": "change the meal type; a uid from get_meal_plan.meal_types",
+          "type": "string"
+        },
+        "meal_uid": {
+          "description": "uid of the meal-plan entry to change, from get_meal_plan",
+          "type": "string"
+        },
+        "name": {
+          "description": "plan this free text, such as Leftovers, in place of what the entry has; not together with recipe_uid",
+          "type": "string"
+        },
+        "recipe_uid": {
+          "description": "plan this recipe in place of what the entry has; not together with name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "meal_uid"
+      ],
+      "type": "object"
+    },
+    "name": "propose_meal_plan_edit",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -3165,6 +5997,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -3200,7 +6191,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -3299,6 +6290,48 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -3646,57 +6679,29 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false,
-      "title": "Propose pantry edit"
+      "title": "Propose meal plan removal"
     },
-    "description": "Prepare a change to ONE existing pantry item: its quantity, whether it is in stock, its expiration or purchase date, or its name. Writes nothing. Returns a proposal_id, a summary, and the item before and after.",
+    "description": "Prepare the removal of meal-plan entries, named by uid. Writes nothing. To plan something else in an entry's place, use propose_meal_plan_edit instead. Returns a proposal_id, a summary and the entries that would be removed.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
-        "allow_duplicate": {
-          "description": "allow renaming to an ingredient another pantry item already has; default false",
-          "type": "boolean"
-        },
-        "clear_expiration": {
-          "description": "remove the expiration date",
-          "type": "boolean"
-        },
-        "expiration_date": {
-          "description": "set the expiration date, YYYY-MM-DD; not together with clear_expiration",
-          "type": "string"
-        },
-        "in_stock": {
-          "description": "false marks the item as used up, true as back in stock",
+        "meal_uids": {
+          "description": "uids of the 1 to 25 meal-plan entries to remove, from get_meal_plan",
+          "items": {
+            "type": "string"
+          },
           "type": [
             "null",
-            "boolean"
-          ]
-        },
-        "ingredient": {
-          "description": "rename the item; its aisle stays as it is",
-          "type": "string"
-        },
-        "item_uid": {
-          "description": "uid of the pantry item to change, from list_pantry",
-          "type": "string"
-        },
-        "purchase_date": {
-          "description": "set the purchase date, YYYY-MM-DD",
-          "type": "string"
-        },
-        "quantity": {
-          "description": "new amount as free text, e.g. 500 g; an empty string clears it",
-          "type": [
-            "null",
-            "string"
+            "array"
           ]
         }
       },
       "required": [
-        "item_uid"
+        "meal_uids"
       ],
       "type": "object"
     },
-    "name": "propose_pantry_edit",
+    "name": "propose_meal_plan_removal",
     "outputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -3736,6 +6741,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -3771,7 +6935,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -3870,6 +7034,820 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, notes, description or directions",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose meal plan removal"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Propose pantry edit"
+    },
+    "description": "Prepare a change to ONE existing pantry item: its quantity, whether it is in stock, its expiration or purchase date, or its name. Writes nothing. Returns a proposal_id, a summary, and the item before and after.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_duplicate": {
+          "description": "allow renaming to an ingredient another pantry item already has; default false",
+          "type": "boolean"
+        },
+        "clear_expiration": {
+          "description": "remove the expiration date",
+          "type": "boolean"
+        },
+        "expiration_date": {
+          "description": "set the expiration date, YYYY-MM-DD; not together with clear_expiration",
+          "type": "string"
+        },
+        "in_stock": {
+          "description": "false marks the item as used up, true as back in stock",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "ingredient": {
+          "description": "rename the item; its aisle stays as it is",
+          "type": "string"
+        },
+        "item_uid": {
+          "description": "uid of the pantry item to change, from list_pantry",
+          "type": "string"
+        },
+        "purchase_date": {
+          "description": "set the purchase date, YYYY-MM-DD",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "new amount as free text, e.g. 500 g; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "item_uid"
+      ],
+      "type": "object"
+    },
+    "name": "propose_pantry_edit",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -4301,6 +8279,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -4336,7 +8473,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -4435,6 +8572,48 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -4844,6 +9023,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -4879,7 +9217,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -4978,6 +9316,48 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
@@ -5413,6 +9793,165 @@
               "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
               "type": "string"
             },
+            "grocery_after": {
+              "description": "for a grocery edit or check-off: how the items would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_before": {
+              "description": "for a grocery edit or check-off: the items as they are now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "grocery_removed": {
+              "description": "the grocery items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "list_uid": {
+                    "description": "uid of the grocery list the item is on",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "the line as shown in Paprika, quantity included",
+                    "type": "string"
+                  },
+                  "purchased": {
+                    "type": "boolean"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "recipe": {
+                    "description": "name of the recipe the item was added from, if any",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika grocery item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name",
+                  "list_uid",
+                  "purchased"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "items": {
               "description": "the grocery items that would be created",
               "items": {
@@ -5448,7 +9987,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal or recipe_edit",
               "type": "string"
             },
             "list": {
@@ -5547,6 +10086,48 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "meals_removed": {
+              "description": "the meal-plan entries that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "meal_type": {
+                    "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                    "type": "string"
+                  },
+                  "meal_type_uid": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "recipe name, or the free text of a note-style entry",
+                    "type": "string"
+                  },
+                  "recipe_uid": {
+                    "description": "set when the entry points at a recipe; pass it to get_recipe",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika meal uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "date",
+                  "meal_type",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "pantry_before": {
