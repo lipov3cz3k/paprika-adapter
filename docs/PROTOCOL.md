@@ -449,6 +449,10 @@ What this means for the adapter:
   Paprika's framework. Until 2026-11-14 the adapter computed that. On the cache of a real account on 2026-10-09
   it reproduced the stored hash of 79 of 157 recipes; the other 78 carried a hash of some other scheme. Recipes
   keep whatever hash they had until they are edited again, so both lengths occur side by side.
+- First verified on 2026-11-12 with `TestLiveRecipeEdit` on `/api/v2/` against a throwaway recipe created in
+  Paprika 4.0: the edited fields were read back, every other field (times, servings, ingredients, categories, the
+  eight newer fields) came back unchanged, and the restore took. The app afterwards showed the recipe with its
+  original content, without a sync error.
 - Verified with `TestLiveRecipeEdit` on 2026-11-14. On the same day a recipe was edited twice while Paprika
   4.0.22 for macOS and Paprika 4 for Android had it open: first rating and notes, then every text field with the
   matching `*_minutes` and `servings_*` numbers. Both apps showed each change at once and correctly, and neither
