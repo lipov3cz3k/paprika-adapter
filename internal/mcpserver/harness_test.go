@@ -149,6 +149,8 @@ type reply struct {
 
 	Photo      *mcpserver.RecipePhoto
 	RecipeEdit *mcpserver.RecipeEditView `json:"recipe_edit"`
+	RecipeNew  *mcpserver.RecipeEditView `json:"recipe_new"`
+	Trashed    []mcpserver.NamedRef      `json:"recipes_trashed"`
 	MealBefore *mcpserver.MealEntry      `json:"meal_before"`
 	Proposal   *mcpserver.ProposalView
 	Status     string

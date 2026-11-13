@@ -135,9 +135,11 @@ PAPRIKA_IT_LIST_UID=<uid of the test list> \
 PAPRIKA_IT_MEAL_DATE=2027-12-31 \
 PAPRIKA_IT_RECIPE_UID=<uid of the throwaway recipe> \
 PAPRIKA_IT_PANTRY=1 \
+PAPRIKA_IT_RECIPE_CREATE=1 \
 make integration
 ```
 
+The recipe create test leaves an `[adapter-it] …` recipe in the Paprika trash; empty the trash in an app.
 The grocery test refuses to run unless the list's name contains `test`. Without the `PAPRIKA_IT_*` variables
 only the read test runs. If cleanup fails the test prints what to delete by hand.
 Record the result and date in PROTOCOL.md.

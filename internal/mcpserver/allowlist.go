@@ -26,7 +26,7 @@ var ReadTools = []string{
 // ProposeTools are the write tools that prepare a proposal. They are served only when writes are enabled.
 var ProposeTools = []string{
 	"propose_meal_plan_entry", "propose_meal_plan_edit", "propose_grocery_items", "propose_pantry_items",
-	"propose_pantry_edit", "propose_pantry_removal", "propose_recipe_edit",
+	"propose_pantry_edit", "propose_pantry_removal", "propose_recipe_edit", "propose_recipe_create", "propose_recipe_trash",
 }
 
 // allTools lists every tool the server can serve.
@@ -91,6 +91,8 @@ var proposeToolOf = map[string]string{
 	kindPantryEdit:    "propose_pantry_edit",
 	kindPantryRemoval: "propose_pantry_removal",
 	kindRecipe:        "propose_recipe_edit",
+	kindRecipeCreate:  "propose_recipe_create",
+	kindRecipeTrash:   "propose_recipe_trash",
 }
 
 // commitAllowed says whether the allowlist lets a proposal of this kind be committed:

@@ -7,7 +7,7 @@
       "readOnlyHint": false,
       "title": "Commit proposal"
     },
-    "description": "Write a proposal to Paprika after the user approved it, then read it back to verify. If the client supports MCP elicitation the user is asked to approve the exact summary first. Safe to repeat: a retried commit never creates duplicates. Committing an edit overwrites the edited fields of that recipe, meal-plan entry or pantry item; committing a removal removes the named pantry items.",
+    "description": "Write a proposal to Paprika after the user approved it, then read it back to verify. If the client supports MCP elicitation the user is asked to approve the exact summary first. Safe to repeat: a retried commit never creates duplicates. Committing an edit overwrites the edited fields of that recipe, meal-plan entry or pantry item; committing a removal removes the named pantry items; committing a trash moves the named recipes into or out of the trash.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -108,7 +108,7 @@
           ]
         },
         "kind": {
-          "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+          "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
           "type": "string"
         },
         "list": {
@@ -402,6 +402,89 @@
           "type": [
             "null",
             "object"
+          ]
+        },
+        "recipe_new": {
+          "additionalProperties": false,
+          "description": "the created recipe, read back from Paprika: its uid and every field it was given",
+          "properties": {
+            "changes": {
+              "description": "one entry per field that changes",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                    "type": "string"
+                  },
+                  "from": {
+                    "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "value after the change",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field",
+                  "from",
+                  "to"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "recipe": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "recipe",
+            "changes"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "recipes_trashed": {
+          "description": "the recipes moved into, or out of, the trash",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "uid": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "uid",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
           ]
         },
         "skipped": {
@@ -2089,7 +2172,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -2381,6 +2464,89 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "skipped": {
@@ -2646,7 +2812,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -2938,6 +3104,89 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "skipped": {
@@ -3200,7 +3449,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -3492,6 +3741,89 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "skipped": {
@@ -3771,7 +4103,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -4063,6 +4395,89 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "skipped": {
@@ -4336,7 +4751,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -4628,6 +5043,89 @@
               "type": [
                 "null",
                 "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
               ]
             },
             "skipped": {
@@ -4879,7 +5377,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -5173,6 +5671,89 @@
                 "object"
               ]
             },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "skipped": {
               "description": "requested items that will NOT be written, with the reason",
               "items": {
@@ -5325,9 +5906,693 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false,
+      "title": "Propose recipe"
+    },
+    "description": "Prepare a new recipe: name, ingredients, directions and any other text field, categories by name, rating. Writes nothing. A recipe with the same name outside the trash is refused unless allow_duplicate is true. Returns a proposal_id, a summary and every field the recipe would get.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_duplicate": {
+          "description": "create it even if a recipe with the same name exists outside the trash; default false",
+          "type": "boolean"
+        },
+        "categories": {
+          "description": "categories by name; they must exist in Paprika",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "cook_time": {
+          "description": "cooking time in minutes, e.g. 80 min",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "difficulty as free text, e.g. Easy",
+          "type": "string"
+        },
+        "directions": {
+          "description": "one step per line",
+          "type": "string"
+        },
+        "ingredients": {
+          "description": "one ingredient per line, as Paprika stores it (e.g. 200 g flour); a line ending in a colon is a heading",
+          "type": "string"
+        },
+        "name": {
+          "description": "the recipe's name",
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "nutritional_info": {
+          "description": "nutrition as free text",
+          "type": "string"
+        },
+        "prep_time": {
+          "description": "preparation time in minutes, e.g. 15 min, which the apps can parse back",
+          "type": "string"
+        },
+        "rating": {
+          "description": "stars, 1 to 5; default unrated",
+          "type": "integer"
+        },
+        "servings": {
+          "description": "servings as free text, e.g. 4",
+          "type": "string"
+        },
+        "source": {
+          "description": "where the recipe comes from, e.g. a book or site name",
+          "type": "string"
+        },
+        "source_url": {
+          "description": "link to the original recipe",
+          "type": "string"
+        },
+        "total_time": {
+          "description": "total time in minutes, e.g. 95 min",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "propose_recipe_create",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, plan_required, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, plan_required, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose recipe"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
       "title": "Propose recipe edit"
     },
-    "description": "Prepare a change to an existing recipe: its name, ingredients, directions, description, notes, times, servings, source, star rating or categories. Writes nothing. A given field REPLACES what the recipe has; append_note adds to the notes instead. Returns a proposal_id, a summary and the old and new value of every field to show the user.",
+    "description": "Prepare a change to an existing recipe: its name, ingredients, directions, description, notes, times, servings, source, star rating or categories. Writes nothing. A given field REPLACES what the recipe has; append_note adds to the notes instead. Renaming to the name of another recipe outside the trash is refused unless allow_duplicate is true. Returns a proposal_id, a summary and the old and new value of every field to show the user.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -5340,6 +6605,10 @@
             "null",
             "array"
           ]
+        },
+        "allow_duplicate": {
+          "description": "allow renaming to the name of another recipe outside the trash; default false",
+          "type": "boolean"
         },
         "append_note": {
           "description": "text added as a new paragraph after the existing notes; cannot be combined with notes",
@@ -5548,7 +6817,7 @@
               ]
             },
             "kind": {
-              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit",
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
               "type": "string"
             },
             "list": {
@@ -5842,6 +7111,89 @@
                 "object"
               ]
             },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
             "skipped": {
               "description": "requested items that will NOT be written, with the reason",
               "items": {
@@ -5987,6 +7339,636 @@
       "type": "object"
     },
     "title": "Propose recipe edit"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Propose recipe trash"
+    },
+    "description": "Prepare moving recipes, named by uid, to Paprika's trash, or with restore=true out of it. Writes nothing. The trash keeps them until it is emptied in an app; this adapter never deletes a recipe for good. Returns a proposal_id and a summary.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "restore": {
+          "description": "true takes the recipes out of the trash instead; find them with search_recipes include_trashed=true",
+          "type": "boolean"
+        },
+        "uids": {
+          "description": "uids of the 1 to 25 recipes to move to Paprika's trash, from search_recipes",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "uids"
+      ],
+      "type": "object"
+    },
+    "name": "propose_recipe_trash",
+    "outputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "description": "stable machine-readable code, e.g. invalid_input, not_found, auth_failed, plan_required, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict",
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "description": "true when repeating the same call later may succeed without anyone changing anything",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "retryable"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "ok": {
+          "description": "false when the call failed; error says why",
+          "type": "boolean"
+        },
+        "proposal": {
+          "additionalProperties": false,
+          "properties": {
+            "expires_at": {
+              "description": "RFC 3339 UTC time after which the proposal can no longer be committed",
+              "type": "string"
+            },
+            "items": {
+              "description": "the grocery items that would be created",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "description": "aisle Paprika already associates with this ingredient, if any",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "uid the item will have in Paprika",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "kind": {
+              "description": "meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash",
+              "type": "string"
+            },
+            "list": {
+              "additionalProperties": false,
+              "description": "the grocery list that would receive the items",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal": {
+              "additionalProperties": false,
+              "description": "the meal-plan entry that would be created, or how an edited entry would look afterwards",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "meal_before": {
+              "additionalProperties": false,
+              "description": "for an edit: the entry as it is now",
+              "properties": {
+                "date": {
+                  "description": "YYYY-MM-DD",
+                  "type": "string"
+                },
+                "meal_type": {
+                  "description": "meal type name, e.g. Dinner; empty if Paprika no longer has the type",
+                  "type": "string"
+                },
+                "meal_type_uid": {
+                  "type": "string"
+                },
+                "name": {
+                  "description": "recipe name, or the free text of a note-style entry",
+                  "type": "string"
+                },
+                "recipe_uid": {
+                  "description": "set when the entry points at a recipe; pass it to get_recipe",
+                  "type": "string"
+                },
+                "uid": {
+                  "description": "stable Paprika meal uid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "uid",
+                "date",
+                "meal_type",
+                "name"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "pantry_before": {
+              "description": "for an edit: the item as it is now",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_items": {
+              "description": "the pantry items that would be created, or how an edited item would look afterwards",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "pantry_removed": {
+              "description": "the pantry items that would be removed",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "expiration_date": {
+                    "description": "YYYY-MM-DD, present only when the item has an expiration date",
+                    "type": "string"
+                  },
+                  "in_stock": {
+                    "type": "boolean"
+                  },
+                  "ingredient": {
+                    "type": "string"
+                  },
+                  "purchase_date": {
+                    "description": "YYYY-MM-DD",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "description": "free text as entered in Paprika",
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "stable Paprika pantry item uid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "ingredient",
+                  "in_stock"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "proposal_id": {
+              "description": "pass this to commit_proposal",
+              "type": "string"
+            },
+            "recipe_edit": {
+              "additionalProperties": false,
+              "description": "the recipe that would be changed, with the old and new value of every field",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipe_new": {
+              "additionalProperties": false,
+              "description": "the recipe that would be created, with every field it is given",
+              "properties": {
+                "changes": {
+                  "description": "one entry per field that changes",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
+                        "type": "string"
+                      },
+                      "from": {
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
+                        "type": "string"
+                      },
+                      "to": {
+                        "description": "value after the change",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "from",
+                      "to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "null",
+                    "array"
+                  ]
+                },
+                "recipe": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "uid",
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "recipe",
+                "changes"
+              ],
+              "type": [
+                "null",
+                "object"
+              ]
+            },
+            "recipes_trashed": {
+              "description": "the recipes that would be moved into, or out of, the trash",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "uid",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "skipped": {
+              "description": "requested items that will NOT be written, with the reason",
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "existing_uid": {
+                    "description": "uid of the item already in Paprika",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "type": [
+                "null",
+                "array"
+              ]
+            },
+            "summary": {
+              "description": "plain-language statement of exactly what commit_proposal will write",
+              "type": "string"
+            }
+          },
+          "required": [
+            "proposal_id",
+            "kind",
+            "expires_at",
+            "summary"
+          ],
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "sync": {
+          "description": "freshness of each Paprika collection this result was built from",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "age_seconds": {
+                "description": "seconds since last_synced_at",
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "collection": {
+                "description": "Paprika collection the data came from",
+                "type": "string"
+              },
+              "error": {
+                "additionalProperties": false,
+                "description": "why the most recent sync attempt failed, if it did",
+                "properties": {
+                  "at": {
+                    "description": "RFC 3339 UTC time of the failed attempt",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "auth_failed, plan_required, upstream_unavailable, protocol_changed, rejected, not_found or cache_error",
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "at"
+                ],
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "last_synced_at": {
+                "description": "RFC 3339 UTC time the cached copy was last confirmed current",
+                "type": "string"
+              },
+              "protocol_drift": {
+                "additionalProperties": false,
+                "description": "fields Paprika added or stopped sending compared to what the adapter was built against",
+                "properties": {
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  },
+                  "unknown_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "null",
+                      "array"
+                    ]
+                  }
+                },
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "rows": {
+                "description": "rows cached for this collection; while never_synced, how far the first sync has got",
+                "type": "integer"
+              },
+              "state": {
+                "description": "fresh = confirmed against Paprika recently; stale = cached copy that could not be confirmed (see error); never_synced = no complete copy cached yet, do not answer from it",
+                "type": "string"
+              }
+            },
+            "required": [
+              "collection",
+              "state",
+              "rows"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        }
+      },
+      "required": [
+        "ok"
+      ],
+      "type": "object"
+    },
+    "title": "Propose recipe trash"
   },
   {
     "annotations": {

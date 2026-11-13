@@ -87,10 +87,12 @@ text minus blank lines.
 
 ## Write tools (only with `PAPRIKA_ENABLE_WRITES=true`)
 
-There are exactly eight: seven that prepare a write and one that performs it. Three of the writes only create
-new rows. Three change existing data: `propose_recipe_edit` (text fields, rating and categories of a recipe),
-`propose_meal_plan_edit` (one meal-plan entry) and `propose_pantry_edit` (one pantry item). One removes data:
-`propose_pantry_removal`. Nothing else can be deleted or cleared.
+There are exactly ten: nine that prepare a write and one that performs it. Four of the writes only create
+new rows: meal-plan entries, grocery items, pantry items and recipes (`propose_recipe_create`). Three change
+existing data: `propose_recipe_edit` (text fields, rating and categories of a recipe),
+`propose_meal_plan_edit` (one meal-plan entry) and `propose_pantry_edit` (one pantry item).
+`propose_recipe_trash` moves recipes into or out of Paprika's trash. One removes data: `propose_pantry_removal`.
+Nothing else can be deleted or cleared; no recipe is ever deleted for good.
 
 | Tool | Arguments | Effect |
 |---|---|---|
@@ -100,7 +102,9 @@ new rows. Three change existing data: `propose_recipe_edit` (text fields, rating
 | `propose_pantry_items` | `items[]` 1-25 of `{ingredient, quantity?, expiration_date?}`; `allow_duplicates?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_items[]`, `skipped[]`). Items are created in stock with today's date (in `PAPRIKA_TZ`) as purchase date |
 | `propose_pantry_edit` | `item_uid` (from `list_pantry`), and at least one of `ingredient`, `quantity` (`""` clears), `in_stock`, `expiration_date`, `clear_expiration`, `purchase_date`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_before[]`, `pantry_items[]`, one item each) |
 | `propose_pantry_removal` | `item_uids[]` 1-25 (from `list_pantry`) | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_removed[]`) |
-| `propose_recipe_edit` | `uid`, and at least one of `rating` (0-5, 0 = unrated), `name`, `ingredients`, `directions`, `description`, `notes`, `append_note`, `nutritional_info`, `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`, `categories` (replace), `add_categories`, `remove_categories` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipe_edit.changes[]` with `field`, `from`, `to`) |
+| `propose_recipe_edit` | `uid`, and at least one of `rating` (0-5, 0 = unrated), `name`, `ingredients`, `directions`, `description`, `notes`, `append_note`, `nutritional_info`, `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`, `categories` (replace), `add_categories`, `remove_categories`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipe_edit.changes[]` with `field`, `from`, `to`) |
+| `propose_recipe_create` | `name`, and any of `ingredients`, `directions`, `description`, `notes`, `nutritional_info`, `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`, `categories[]` (by name), `rating`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipe_new` with the new uid and every field given) |
+| `propose_recipe_trash` | `uids[]` 1-25 (from `search_recipes`), `restore?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipes_trashed[]`, `skipped[]`) |
 | `commit_proposal` | `proposal_id`, `confirm: true` | Writes the proposal, reads it back, returns `status`, `verified`, and the rows as read back |
 
 ### How a write goes
@@ -146,7 +150,22 @@ new rows. Three change existing data: `propose_recipe_edit` (text fields, rating
   was chosen deliberately. Edits to other fields survive. An edit made in an app during the fraction of a
   second between the adapter's read and its write would be lost whatever the field.
 - Recipes in the trash cannot be edited. Proposing values the recipe already has answers `duplicate`.
+- Renaming a recipe to the name of another recipe outside the trash answers `duplicate` unless
+  `allow_duplicate` is set; the check is repeated at commit.
 - Photos, favourite and pinned state, scale and the trash flag cannot be changed.
+
+### Creating a recipe, and the trash
+
+`propose_recipe_create` creates a recipe in the shape the Paprika 4 apps save one: the text fields given,
+the rest empty, no photo, not a favourite, in the default cookbook, `created` now in `PAPRIKA_TZ`. Categories are named as in Paprika
+and must exist. A recipe with the same name outside the trash is refused as `duplicate` unless
+`allow_duplicate` is set. The uid is minted when proposing, so a repeated commit finds the recipe instead of
+creating a second one; the new recipe is in the cache at once (searchable, editable).
+
+`propose_recipe_trash` moves recipes to Paprika's trash, or with `restore: true` takes them out. Search
+leaves trashed recipes out unless `include_trashed` is set, and they cannot be edited. Only an app can empty
+the trash: this adapter never deletes a recipe for good. Recipes already in the asked-for state are listed in
+`skipped`.
 
 ### Editing a meal-plan entry
 

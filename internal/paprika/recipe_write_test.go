@@ -103,3 +103,36 @@ func TestWriteRecipeClearsTheNumbersBesideAnEditedText(t *testing.T) {
 		t.Fatalf("prep_minutes of a recipe without numbers became %v (present %v, was %v)", v, has, hadKey)
 	}
 }
+
+// Trashing must change the hash, or the apps never notice it. Every write
+// stamps a new one, so moving a recipe into the trash and out again does.
+func TestTrashingARecipeChangesItsHash(t *testing.T) {
+	const uid = "014031E3-BC74-4CA8-B345-36EBE9C9794B"
+	fake := newFake(t)
+	c := newClient(t, fake)
+	ctx := context.Background()
+	write := func(edit paprika.RecipeEdit) map[string]any {
+		t.Helper()
+		cur, err := c.Recipe(ctx, uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent, err := c.WriteRecipe(ctx, cur, edit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var body map[string]any
+		_ = json.Unmarshal(sent, &body)
+		return body
+	}
+	before := fake.Recipe(uid)["hash"]
+	yes, no := true, false
+	trashed := write(paprika.RecipeEdit{InTrash: &yes})
+	restored := write(paprika.RecipeEdit{InTrash: &no})
+	if trashed["in_trash"] != true || restored["in_trash"] != false {
+		t.Fatalf("in_trash trashed %v, restored %v", trashed["in_trash"], restored["in_trash"])
+	}
+	if trashed["hash"] == before || restored["hash"] == trashed["hash"] || restored["hash"] == before {
+		t.Fatalf("hash before %v, trashed %v, restored %v: every move must change it", before, trashed["hash"], restored["hash"])
+	}
+}

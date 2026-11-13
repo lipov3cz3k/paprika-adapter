@@ -80,8 +80,8 @@ func New(d Deps) *mcp.Server {
 		"served from a local cache. Every result carries a sync block: treat state=stale as possibly outdated and say so."
 	if s.writes {
 		instructions += " " + flow +
-			"Writes add rows, except the edit tools (propose_*_edit), which overwrite an existing item, and propose_pantry_removal, " +
-			"which removes pantry items; only the tools listed by this server are available. " +
+			"Writes add rows, except the edit tools (propose_*_edit), which overwrite an existing item, propose_pantry_removal, " +
+			"which removes pantry items, and propose_recipe_trash, which moves recipes to the trash; only the tools listed by this server are available. " +
 			asked
 	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: "paprika-adapter", Title: "Paprika household adapter", Version: d.Version}, &mcp.ServerOptions{
@@ -130,12 +130,20 @@ func New(d Deps) *mcp.Server {
 		add(reg, writeTool("propose_recipe_edit", "Propose recipe edit",
 			"Prepare a change to an existing recipe: its name, ingredients, directions, description, notes, times, servings, "+
 				"source, star rating or categories. Writes nothing. "+
-				"A given field REPLACES what the recipe has; append_note adds to the notes instead. Returns a proposal_id, a summary "+
+				"A given field REPLACES what the recipe has; append_note adds to the notes instead. Renaming to the name of another "+
+				"recipe outside the trash is refused unless allow_duplicate is true. Returns a proposal_id, a summary "+
 				"and the old and new value of every field to show the user.", false, false), s.proposeRecipeEdit)
+		add(reg, writeTool("propose_recipe_create", "Propose recipe",
+			"Prepare a new recipe: name, ingredients, directions and any other text field, categories by name, rating. Writes nothing. "+
+				"A recipe with the same name outside the trash is refused unless allow_duplicate is true. Returns a proposal_id, "+
+				"a summary and every field the recipe would get.", false, false), s.proposeRecipeCreate)
+		add(reg, writeTool("propose_recipe_trash", "Propose recipe trash",
+			"Prepare moving recipes, named by uid, to Paprika's trash, or with restore=true out of it. Writes nothing. The trash keeps "+
+				"them until it is emptied in an app; this adapter never deletes a recipe for good. Returns a proposal_id and a summary.", false, false), s.proposeRecipeTrash)
 		add(reg, writeTool("commit_proposal", "Commit proposal",
 			commit+"Safe to repeat: a retried commit never creates duplicates. "+
 				"Committing an edit overwrites the edited fields of that recipe, meal-plan entry or pantry item; committing a removal "+
-				"removes the named pantry items.", true, true), s.commitProposal)
+				"removes the named pantry items; committing a trash moves the named recipes into or out of the trash.", true, true), s.commitProposal)
 	}
 	return srv
 }

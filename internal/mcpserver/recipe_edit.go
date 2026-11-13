@@ -38,6 +38,7 @@ type ProposeRecipeEditIn struct {
 	Categories       *[]string `json:"categories,omitempty" jsonschema:"REPLACES the recipe's categories with these, by name; they must exist in Paprika; an empty list removes all. Not together with add_categories or remove_categories"`
 	AddCategories    []string  `json:"add_categories,omitempty" jsonschema:"put the recipe in these categories too, by name; they must exist in Paprika"`
 	RemoveCategories []string  `json:"remove_categories,omitempty" jsonschema:"take the recipe out of these categories, by name"`
+	AllowDuplicate   bool      `json:"allow_duplicate,omitempty" jsonschema:"allow renaming to the name of another recipe outside the trash; default false"`
 }
 
 // recipeEdit is what a proposal stores. The note to append and the categories
@@ -177,6 +178,13 @@ func (s *server) proposeRecipeEdit(ctx context.Context, in ProposeRecipeEditIn, 
 		return invalid("recipe " + recipe.Name + " is in Paprika's trash")
 	}
 	edit.Name = recipe.Name
+	if terr := edit.notesTooLong(recipe, ""); terr != nil {
+		return terr
+	}
+	if terr := s.renameClash(ctx, edit, recipe, in.AllowDuplicate,
+		"a recipe named %q already exists (uid %s); pass allow_duplicate=true to have two"); terr != nil {
+		return terr
+	}
 	changes := edit.changes(recipe, cats.names)
 	if len(changes) == 0 {
 		return &ToolError{Code: "duplicate", Message: fmt.Sprintf("nothing to change: recipe %q already has these values", recipe.Name)}
@@ -200,7 +208,7 @@ func (s *server) proposeRecipeEdit(ctx context.Context, in ProposeRecipeEditIn, 
 		}
 	}
 	edit.Proposed = changes
-	p := payload{Recipe: &edit, Summary: fmt.Sprintf("Change the Paprika recipe %q: %s. This overwrites what the recipe has now.", recipe.Name, strings.Join(parts, "; "))}
+	p := payload{Recipe: &edit, AllowDuplicates: in.AllowDuplicate, Summary: fmt.Sprintf("Change the Paprika recipe %q: %s. This overwrites what the recipe has now.", recipe.Name, strings.Join(parts, "; "))}
 	view, terr := s.saveProposal(ctx, kindRecipe, p)
 	if terr != nil {
 		return terr
@@ -232,6 +240,13 @@ func (s *server) commitRecipeEdit(ctx context.Context, p payload, out *CommitOut
 	if len(changes) == 0 { // an earlier attempt already landed; report what was proposed
 		changes = append(changes, edit.Proposed...)
 	} else {
+		if terr := s.renameClash(ctx, edit, before, p.AllowDuplicates,
+			"nothing was written: a recipe named %q was created in the meantime (uid %s)"); terr != nil {
+			return terr
+		}
+		if terr := edit.notesTooLong(before, "nothing was written: "); terr != nil { // the notes may have grown since the proposal
+			return terr
+		}
 		if _, err := s.Client.WriteRecipe(ctx, current, edit.resolved(before)); err != nil {
 			return writeFailed(err)
 		}
@@ -290,6 +305,15 @@ func (e recipeEdit) resolved(now paprika.Recipe) paprika.RecipeEdit {
 		out.Categories = &uids
 	}
 	return out
+}
+
+// notesTooLong refuses an append_note that would make the notes now has longer
+// than any text a tool accepts. prefix starts the message.
+func (e recipeEdit) notesTooLong(now paprika.Recipe, prefix string) *ToolError {
+	if e.AppendNote == "" || utf8.RuneCountInString(e.resolved(now).Text["notes"]) <= maxRecipeText {
+		return nil
+	}
+	return invalid(fmt.Sprintf("%sthe notes with append_note added would be longer than %d characters", prefix, maxRecipeText))
 }
 
 // changes lists the fields whose value in now differs from what the edit wants.

@@ -121,9 +121,9 @@ Only after step 3 is clean and the read tools have been used for a while:
    without a person pressing approve in the client that asked, or `PAPRIKA_APPROVAL=none` if a client holding
    a token may write without anyone being asked. `make restart`, then reload the client.
 
-Eight more tools appear: `propose_meal_plan_entry`, `propose_meal_plan_edit`, `propose_grocery_items`,
+Ten more tools appear: `propose_meal_plan_entry`, `propose_meal_plan_edit`, `propose_grocery_items`,
 `propose_pantry_items`, `propose_pantry_edit`, `propose_pantry_removal`, `propose_recipe_edit`,
-`commit_proposal`. Each write is
+`propose_recipe_create`, `propose_recipe_trash`, `commit_proposal`. Each write is
 logged with the name of the client that made it (`tool=commit_proposal client=anna outcome=ok`).
 
 ## Without Docker

@@ -83,6 +83,20 @@ func TestAppendNoteKeepsExistingNotesAndIsNotAppliedTwice(t *testing.T) {
 	}
 }
 
+// append_note is held to the notes limit with what the notes already have,
+// at propose and again at commit, when the notes may have grown.
+func TestAppendNoteCannotMakeTheNotesTooLong(t *testing.T) {
+	h := newHarness(t, true)
+	h.fake.UpdateRecipe(soupUID, "notes", strings.Repeat("n", 19000))
+	h.fails("propose_recipe_edit", map[string]any{"uid": soupUID, "append_note": strings.Repeat("x", 1000)}, "invalid_input")
+	p := h.ok("propose_recipe_edit", map[string]any{"uid": soupUID, "append_note": strings.Repeat("x", 900)}).Proposal
+	h.fake.UpdateRecipe(soupUID, "notes", strings.Repeat("n", 19500))
+	h.fails("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}, "invalid_input")
+	if recipePosts(h, soupUID) != 0 {
+		t.Fatal("a refused append reached Paprika")
+	}
+}
+
 // The user asked for plain overwrite: an edit made elsewhere to the same field
 // loses, but edits to other fields survive because the commit starts from a fresh copy.
 func TestRecipeEditOverwritesTheFieldAndKeepsWhatElseChanged(t *testing.T) {
@@ -233,4 +247,25 @@ func TestRecipeEditNeedsFreshCategoriesOnlyForCategories(t *testing.T) {
 	h.fake.FailNext("GET "+paprika.SyncPath+"categories/", 500, 500, 500, 500, 500, 500, 500, 500, 500, 500)
 	h.ok("propose_recipe_edit", map[string]any{"uid": roastUID, "rating": 2})
 	h.fails("propose_recipe_edit", map[string]any{"uid": roastUID, "add_categories": []any{"Soup"}}, "upstream_unavailable")
+}
+
+// Renaming onto another recipe's name is refused, as creating one is; the
+// recipe's own name in another case is not a clash.
+func TestRecipeEditRefusesRenamingOntoAnotherRecipe(t *testing.T) {
+	h := newHarness(t, true)
+	h.fails("propose_recipe_edit", map[string]any{"uid": roastUID, "name": "red lentil  SOUP"}, "duplicate")
+	h.ok("propose_recipe_edit", map[string]any{"uid": roastUID, "name": "LEMON garlic roast chicken"})
+	p := h.ok("propose_recipe_edit", map[string]any{"uid": roastUID, "name": "Red Lentil Soup", "allow_duplicate": true}).Proposal
+	h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true})
+	if h.fake.Recipe(roastUID)["name"] != "Red Lentil Soup" {
+		t.Fatal("the allowed rename was not written")
+	}
+
+	// A recipe that takes the name between propose and commit stops the commit.
+	p = h.ok("propose_recipe_edit", map[string]any{"uid": soupUID, "name": "Sunday Soup"}).Proposal
+	h.ok("commit_proposal", map[string]any{"proposal_id": h.ok("propose_recipe_create", map[string]any{"name": "Sunday soup"}).Proposal.ProposalID, "confirm": true})
+	h.fails("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}, "duplicate")
+	if recipePosts(h, soupUID) != 0 {
+		t.Fatal("the clashing rename reached Paprika")
+	}
 }

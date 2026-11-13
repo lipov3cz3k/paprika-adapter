@@ -117,6 +117,24 @@ func (s *Store) Recipe(ctx context.Context, uid string) (CachedRecipe, bool, err
 	return CachedRecipe{Raw: json.RawMessage(raw), FetchedAt: parseStamp(fetched)}, true, nil
 }
 
+// ActiveRecipeNames returns uid -> name for every cached recipe outside the trash.
+func (s *Store) ActiveRecipeNames(ctx context.Context) (map[string]string, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT uid, name FROM recipes WHERE in_trash = 0`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]string{}
+	for rows.Next() {
+		var uid, name string
+		if err := rows.Scan(&uid, &name); err != nil {
+			return nil, err
+		}
+		out[uid] = name
+	}
+	return out, rows.Err()
+}
+
 // AllRecipes returns every cached recipe ordered by name, for exports.
 func (s *Store) AllRecipes(ctx context.Context) ([]json.RawMessage, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT raw FROM recipes ORDER BY name COLLATE NOCASE, uid`)

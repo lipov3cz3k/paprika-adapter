@@ -21,6 +21,8 @@ const (
 
 	kindPantryEdit    = "pantry_edit"
 	kindPantryRemoval = "pantry_removal"
+	kindRecipeCreate  = "recipe_create"
+	kindRecipeTrash   = "recipe_trash"
 
 	maxGroceryItems = 25
 	maxTextLen      = 200
@@ -38,24 +40,28 @@ type payload struct {
 	MealEdit        *mealEdit                `json:"meal_edit,omitempty"`
 	PantryEdit      *pantryEdit              `json:"pantry_edit,omitempty"`
 	PantryRemoval   []PantryEntry            `json:"pantry_removal,omitempty"` // as shown to the user when proposing
+	RecipeCreate    *paprika.NewRecipe       `json:"recipe_create,omitempty"`
+	RecipeTrash     *recipeTrash             `json:"recipe_trash,omitempty"`
 	Skipped         []SkippedItem            `json:"skipped,omitempty"`
 	AllowDuplicates bool                     `json:"allow_duplicates"`
 }
 
 type ProposalView struct {
-	ProposalID    string          `json:"proposal_id" jsonschema:"pass this to commit_proposal"`
-	Kind          string          `json:"kind" jsonschema:"meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal or recipe_edit"`
-	ExpiresAt     string          `json:"expires_at" jsonschema:"RFC 3339 UTC time after which the proposal can no longer be committed"`
-	Summary       string          `json:"summary" jsonschema:"plain-language statement of exactly what commit_proposal will write"`
-	Meal          *MealEntry      `json:"meal,omitempty" jsonschema:"the meal-plan entry that would be created, or how an edited entry would look afterwards"`
-	MealBefore    *MealEntry      `json:"meal_before,omitempty" jsonschema:"for an edit: the entry as it is now"`
-	List          *NamedRef       `json:"list,omitempty" jsonschema:"the grocery list that would receive the items"`
-	Items         []ProposedItem  `json:"items,omitempty" jsonschema:"the grocery items that would be created"`
-	Pantry        []PantryEntry   `json:"pantry_items,omitempty" jsonschema:"the pantry items that would be created, or how an edited item would look afterwards"`
-	PantryBefore  []PantryEntry   `json:"pantry_before,omitempty" jsonschema:"for an edit: the item as it is now"`
-	PantryRemoved []PantryEntry   `json:"pantry_removed,omitempty" jsonschema:"the pantry items that would be removed"`
-	Recipe        *RecipeEditView `json:"recipe_edit,omitempty" jsonschema:"the recipe that would be changed, with the old and new value of every field"`
-	Skipped       []SkippedItem   `json:"skipped,omitempty" jsonschema:"requested items that will NOT be written, with the reason"`
+	ProposalID     string          `json:"proposal_id" jsonschema:"pass this to commit_proposal"`
+	Kind           string          `json:"kind" jsonschema:"meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash"`
+	ExpiresAt      string          `json:"expires_at" jsonschema:"RFC 3339 UTC time after which the proposal can no longer be committed"`
+	Summary        string          `json:"summary" jsonschema:"plain-language statement of exactly what commit_proposal will write"`
+	Meal           *MealEntry      `json:"meal,omitempty" jsonschema:"the meal-plan entry that would be created, or how an edited entry would look afterwards"`
+	MealBefore     *MealEntry      `json:"meal_before,omitempty" jsonschema:"for an edit: the entry as it is now"`
+	List           *NamedRef       `json:"list,omitempty" jsonschema:"the grocery list that would receive the items"`
+	Items          []ProposedItem  `json:"items,omitempty" jsonschema:"the grocery items that would be created"`
+	Pantry         []PantryEntry   `json:"pantry_items,omitempty" jsonschema:"the pantry items that would be created, or how an edited item would look afterwards"`
+	PantryBefore   []PantryEntry   `json:"pantry_before,omitempty" jsonschema:"for an edit: the item as it is now"`
+	PantryRemoved  []PantryEntry   `json:"pantry_removed,omitempty" jsonschema:"the pantry items that would be removed"`
+	Recipe         *RecipeEditView `json:"recipe_edit,omitempty" jsonschema:"the recipe that would be changed, with the old and new value of every field"`
+	RecipeNew      *RecipeEditView `json:"recipe_new,omitempty" jsonschema:"the recipe that would be created, with every field it is given"`
+	RecipesTrashed []NamedRef      `json:"recipes_trashed,omitempty" jsonschema:"the recipes that would be moved into, or out of, the trash"`
+	Skipped        []SkippedItem   `json:"skipped,omitempty" jsonschema:"requested items that will NOT be written, with the reason"`
 }
 
 type ProposedItem struct {

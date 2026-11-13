@@ -664,3 +664,65 @@ func recipeText(r Recipe) map[string]string {
 		"total_time": r.TotalTime, "difficulty": r.Difficulty, "source": r.Source, "source_url": r.SourceURL,
 	}
 }
+
+// TestLiveRecipeCreate creates a recipe the way the adapter does, reads it back,
+// then moves it to the trash and checks that Paprika returns it trashed. The
+// adapter cannot delete a recipe for good, so it stays in the trash until the
+// trash is emptied in an app.
+func TestLiveRecipeCreate(t *testing.T) {
+	c := liveClient(t)
+	if os.Getenv("PAPRIKA_IT_RECIPE_CREATE") != "1" {
+		t.Skip("PAPRIKA_IT_RECIPE_CREATE is not 1")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	r := NewRecipe{UID: NewUID(), Created: time.Now().Format(TimeLayout), Rating: 2, Text: map[string]string{
+		"name": "[adapter-it] " + time.Now().UTC().Format(time.RFC3339), "ingredients": "Dough:\n500 g flour\n7 g yeast",
+		"directions": "Mix.\nRest 2 hours / overnight.", "servings": "4", "prep_time": "15 min", "source": "adapter integration test",
+	}}
+	if _, err := c.CreateRecipe(ctx, r); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	t.Logf("created %q (%s); empty the Paprika trash to get rid of it", r.Text["name"], r.UID)
+	created, err := c.Recipe(ctx, r.UID)
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+	got, err := Decode[Recipe](created.JSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for field, want := range r.Text {
+		if recipeText(got)[field] != want {
+			t.Errorf("read back %s=%q, wrote %q", field, recipeText(got)[field], want)
+		}
+	}
+	if got.Rating != 2 || got.InTrash || got.Created != r.Created || len(got.Categories) != 0 {
+		t.Errorf("read back %s", created.JSON)
+	}
+	refs, err := c.RecipeRefs(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listed := false
+	for _, ref := range refs {
+		listed = listed || (ref.UID == r.UID && ref.Hash == got.Hash)
+	}
+	if !listed {
+		t.Error("the recipe list does not carry the new recipe with its hash")
+	}
+	t.Logf("read back: %s", created.JSON)
+
+	trash := true
+	if _, err := c.WriteRecipe(ctx, created, RecipeEdit{InTrash: &trash}); err != nil {
+		t.Fatalf("trash: %v", err)
+	}
+	trashed, err := c.Recipe(ctx, r.UID)
+	if err != nil {
+		t.Fatalf("read back after trash: %v", err)
+	}
+	if after, _ := Decode[Recipe](trashed.JSON); !after.InTrash || after.Name != got.Name || after.Hash == got.Hash {
+		t.Fatalf("after the trash write Paprika returns %s (hash before %s)", trashed.JSON, got.Hash)
+	}
+}

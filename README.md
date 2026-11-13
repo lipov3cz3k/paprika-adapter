@@ -16,7 +16,7 @@ Paprika stays the source of truth.
 | | |
 |---|---|
 | Read tools | `search_recipes`, `get_recipe`, `get_recipe_photo`, `list_pantry`, `get_meal_plan`, `list_grocery_lists`, `list_grocery_items`, `sync_status` |
-| Write tools (off by default) | `propose_meal_plan_entry`, `propose_meal_plan_edit`, `propose_grocery_items`, `propose_pantry_items`, `propose_pantry_edit`, `propose_pantry_removal`, `propose_recipe_edit`, `commit_proposal` |
+| Write tools (off by default) | `propose_meal_plan_entry`, `propose_meal_plan_edit`, `propose_grocery_items`, `propose_pantry_items`, `propose_pantry_edit`, `propose_pantry_removal`, `propose_recipe_edit`, `propose_recipe_create`, `propose_recipe_trash`, `commit_proposal` |
 | Not available | deleting anything but pantry items, creating recipes, editing anything but a meal-plan entry, a pantry item or a recipe's rating, notes, description and directions, photo uploads, menus |
 
 - Every result is compact typed JSON with Paprika's own uids and an explicit `sync` block
