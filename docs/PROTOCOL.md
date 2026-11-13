@@ -56,7 +56,7 @@ for reads both answer identically (A), and the writes were checked on v3 on
 | 19 | Remove pantry items | `POST /sync/pantry/` with each whole existing row and `deleted: true` | C (soft delete) | **A** 2026-10-10 |
 | 20 | Tell the other devices | `POST /sync/notify/` without a body, after a commit was written and read back. Paprika then sends the account's other devices an `update` event and they sync at once | P | **A** 2026-11-14: `{"result": true}`, and a recipe edit followed by the ping showed up at once in the open macOS and Android apps. A failure is logged and does not fail the commit |
 | 21 | Create a recipe | as 16, to the new uid: the 27 fields of a Paprika 3 save plus `cookbook_uid: null` (the default cookbook), text fields given or `""`, `photo`/`image_url`/`scale` null, `categories` uids, no `metadata_version`, so the apps derive the `*_minutes` and `servings_*` numbers (P) | C, P | **A** 2026-11-12 on v2 without `cookbook_uid`; on v3 not verified |
-| 22 | Move a recipe to the trash, or out | as 16, with `in_trash` set and a new hash | C | **A** 2026-11-12 on v2 (to the trash; out of it not checked in an app); on v3 not verified |
+| 22 | Move a recipe to the trash, or out | as 16, with `in_trash` set and a new hash | C | **A** 2026-11-12 on v2, both ways; on v3 not verified |
 
 Both `www.paprikaapp.com` and `paprikaapp.com` answered identically (L). The adapter uses `www`.
 
@@ -486,6 +486,11 @@ What this means for the adapter:
   trash in the app: the apps notice a change only by the hash. Written again with a different hash, it moved to
   the trash in the app. Every write now stamps a new random hash, so moving a recipe into or out of the trash
   always changes it.
+- **What the app does when it trashes** (A, 2026-11-12, Paprika 4.0). A recipe the adapter had created,
+  deleted in the app, came back from Paprika with `in_trash: true`, a new 16-digit hash, and converted to the
+  Paprika 4 shape: `metadata_version: 2` and `prep_minutes` 1 parsed from the text "1 min". The adapter then
+  took it out of the trash (`in_trash: false`, a hash of its own); the app showed it back in the recipe list
+  with the same content.
 
 ## Photos (all A, 2026-10-09)
 
