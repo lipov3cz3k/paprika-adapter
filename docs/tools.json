@@ -5356,7 +5356,7 @@
           ]
         },
         "cook_time": {
-          "description": "cooking time as free text, e.g. 1 hr 20 min; an empty string clears it",
+          "description": "cooking time as free text in minutes, e.g. 80 min; an empty string clears it",
           "type": [
             "null",
             "string"
@@ -5412,7 +5412,7 @@
           ]
         },
         "prep_time": {
-          "description": "preparation time as free text, e.g. 15 min; an empty string clears it",
+          "description": "preparation time as free text; write it in minutes, e.g. 15 min or 90 min, which the apps can parse back; an empty string clears it",
           "type": [
             "null",
             "string"
@@ -5457,7 +5457,7 @@
           ]
         },
         "total_time": {
-          "description": "total time as free text; an empty string clears it",
+          "description": "total time as free text in minutes, e.g. 95 min; an empty string clears it",
           "type": [
             "null",
             "string"

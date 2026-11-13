@@ -129,7 +129,9 @@ new rows. Three change existing data: `propose_recipe_edit` (text fields, rating
 - Every text field given **replaces** what the recipe has: `name`, `ingredients` (the whole list, one
   ingredient per line, as Paprika stores it), `directions`, `description`, `notes`, `nutritional_info`, and the
   one-line `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`.
-  Times and servings are free text, as in the apps. An empty string clears a field; `name`, `ingredients`
+  Times and servings are free text, as in the apps; write times in minutes (`90 min`), which is what the
+  Paprika 4 editor parses back. Paprika 4 also keeps minutes and a servings range as numbers: an edit of the
+  text clears them, and the apps go by the text. An empty string clears a field; `name`, `ingredients`
   and `directions` cannot be emptied.
 - `append_note` instead adds a paragraph after the existing notes, and is the right choice for "add a note".
 - `categories` replaces the recipe's categories (an empty list removes all); `add_categories` and

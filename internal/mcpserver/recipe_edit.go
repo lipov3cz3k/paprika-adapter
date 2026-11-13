@@ -29,9 +29,9 @@ type ProposeRecipeEditIn struct {
 	AppendNote       string    `json:"append_note,omitempty" jsonschema:"text added as a new paragraph after the existing notes; cannot be combined with notes"`
 	NutritionalInfo  *string   `json:"nutritional_info,omitempty" jsonschema:"REPLACES the nutrition text; an empty string clears it"`
 	Servings         *string   `json:"servings,omitempty" jsonschema:"servings as free text, e.g. 4 or 4-6 portions; an empty string clears it"`
-	PrepTime         *string   `json:"prep_time,omitempty" jsonschema:"preparation time as free text, e.g. 15 min; an empty string clears it"`
-	CookTime         *string   `json:"cook_time,omitempty" jsonschema:"cooking time as free text, e.g. 1 hr 20 min; an empty string clears it"`
-	TotalTime        *string   `json:"total_time,omitempty" jsonschema:"total time as free text; an empty string clears it"`
+	PrepTime         *string   `json:"prep_time,omitempty" jsonschema:"preparation time as free text; write it in minutes, e.g. 15 min or 90 min, which the apps can parse back; an empty string clears it"`
+	CookTime         *string   `json:"cook_time,omitempty" jsonschema:"cooking time as free text in minutes, e.g. 80 min; an empty string clears it"`
+	TotalTime        *string   `json:"total_time,omitempty" jsonschema:"total time as free text in minutes, e.g. 95 min; an empty string clears it"`
 	Difficulty       *string   `json:"difficulty,omitempty" jsonschema:"difficulty as free text, e.g. Easy; an empty string clears it"`
 	Source           *string   `json:"source,omitempty" jsonschema:"where the recipe comes from, e.g. a book or site name; an empty string clears it"`
 	SourceURL        *string   `json:"source_url,omitempty" jsonschema:"link to the original recipe; an empty string clears it"`

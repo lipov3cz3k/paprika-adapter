@@ -229,8 +229,10 @@ func TestLiveGroceryWrite(t *testing.T) {
 	}
 }
 
-// TestLiveRecipeEdit overwrites rating, notes, description and directions of a
+// TestLiveRecipeEdit overwrites rating, categories and every text field of a
 // disposable recipe, reads them back, then writes the original values again.
+// Paprika 4's numbers beside a changed time or servings text (prep_minutes, …)
+// are cleared by the edit and cannot be put back.
 func TestLiveRecipeEdit(t *testing.T) {
 	c := liveClient(t)
 	uid := os.Getenv("PAPRIKA_IT_RECIPE_UID")
@@ -305,16 +307,32 @@ func TestLiveRecipeEdit(t *testing.T) {
 	if got.Hash == was.Hash {
 		t.Error("the hash did not change with the edit")
 	}
-	// Everything that was not edited must have survived the whole-object replace.
+	// Everything that was not edited must have survived the whole-object replace,
+	// apart from the Paprika 4 numbers beside a changed text, which WriteRecipe clears.
 	var before, after map[string]json.RawMessage
 	_ = json.Unmarshal(original.JSON, &before)
 	_ = json.Unmarshal(edited.JSON, &after)
+	cleared := map[string]bool{}
+	for field, v := range text {
+		for _, n := range structuredFrom[field] {
+			if old, ok := before[n]; ok && string(old) != "null" && v != textOf(before[field]) {
+				cleared[n] = true
+			}
+		}
+	}
 	for field, old := range before {
 		switch field {
 		case "rating", "categories", "hash", "photo_url":
 			continue
 		}
 		if _, edited := text[field]; edited {
+			continue
+		}
+		if cleared[field] {
+			if string(after[field]) != "null" {
+				t.Errorf("%s is %s, want null once its text changed", field, after[field])
+			}
+			t.Logf("%s was %s; the restore cannot put it back", field, old)
 			continue
 		}
 		if string(after[field]) != string(old) {

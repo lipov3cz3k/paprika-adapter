@@ -465,6 +465,14 @@ What this means for the adapter:
   different `hash` each time, and the `recipes` counter went up by one per save (169 to 172). So the hash is
   not derived from the content, a changed hash does not mean changed content, and the `*_minutes` and
   `servings_*` values the adapter had sent are the ones both apps compute themselves (A).
+- **Paprika 4 numbers beside the text** (A, 2026-11-12). 2 of 41 recipes on the account had `prep_minutes`,
+  `cook_minutes`, `total_minutes`, `servings_min`, `servings_max`, `metadata_version: 2` and a `nutrition`
+  object. A probe left one such recipe with `prep_time` "45 min" and `prep_minutes` null, `cook_time`
+  "1 hr 30 min" and `cook_minutes` 2, `servings` "8" and the range null. The app (Paprika 4.0) showed "45 min",
+  "1 hr 30 min" and "8": it displays the text. Its time picker parses the text too, and read "1 hr 30 min" as
+  0 h 30 min, so times are best written in minutes ("90 min"). The adapter therefore sets the numbers beside a
+  changed text to null, the state recipes from older apps are in; it does not touch `nutrition` or
+  `metadata_version`.
 
 ## Photos (all A, 2026-10-09)
 

@@ -64,3 +64,42 @@ func TestWriteRecipeSendsTheWholeRecipeBack(t *testing.T) {
 	_, err = c.WriteRecipe(ctx, paprika.Raw{UID: uid, JSON: []byte("[]")}, paprika.RecipeEdit{Rating: &rating})
 	wantKind(t, err, paprika.KindInvalid)
 }
+
+// Paprika 4 keeps minutes and a servings range beside the text. The apps show the
+// text, so an edit of the text clears the numbers instead of leaving them stale.
+func TestWriteRecipeClearsTheNumbersBesideAnEditedText(t *testing.T) {
+	const uid = "014031E3-BC74-4CA8-B345-36EBE9C9794B"
+	fake := newFake(t)
+	for field, v := range map[string]any{"prep_minutes": 15, "cook_minutes": 75, "total_minutes": 90, "servings_min": 4, "servings_max": 6} {
+		fake.UpdateRecipe(uid, field, v)
+	}
+	c := newClient(t, fake)
+	ctx := context.Background()
+	current, err := c.Recipe(ctx, uid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := map[string]string{"prep_time": "20 min", "cook_time": "1 hr 15 mins", "servings": "8"} // cook_time as it already is
+	sent, err := c.WriteRecipe(ctx, current, paprika.RecipeEdit{Text: text})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	_ = json.Unmarshal(sent, &body)
+	if body["prep_minutes"] != nil || body["servings_min"] != nil || body["servings_max"] != nil {
+		t.Fatalf("stale numbers sent: prep %v servings %v-%v", body["prep_minutes"], body["servings_min"], body["servings_max"])
+	}
+	if body["cook_minutes"] != float64(75) || body["total_minutes"] != float64(90) {
+		t.Fatalf("numbers of unchanged text were cleared: cook %v total %v", body["cook_minutes"], body["total_minutes"])
+	}
+	// A recipe from an older app has the numbers null or not at all, and keeps it so.
+	const soup = "DF8BD763-2ADA-49E2-AA2C-05A47A81B007-6735-000003ABB738847D"
+	_, hadKey := fake.Recipe(soup)["prep_minutes"]
+	plain, _ := c.Recipe(ctx, soup)
+	sent, _ = c.WriteRecipe(ctx, plain, paprika.RecipeEdit{Text: text})
+	body = nil
+	_ = json.Unmarshal(sent, &body)
+	if v, has := body["prep_minutes"]; has != hadKey || v != nil {
+		t.Fatalf("prep_minutes of a recipe without numbers became %v (present %v, was %v)", v, has, hadKey)
+	}
+}

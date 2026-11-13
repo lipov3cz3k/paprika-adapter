@@ -23,6 +23,14 @@ var RecipeTextFields = []string{
 	"prep_time", "cook_time", "total_time", "difficulty", "source", "source_url", "nutritional_info",
 }
 
+// structuredFrom lists, for a text field, the numbers Paprika 4 keeps beside it.
+// The apps show and parse the text; the numbers would go stale when the text
+// changes, so an edit of the text clears them, as recipes from older apps have them.
+var structuredFrom = map[string][]string{
+	"prep_time": {"prep_minutes"}, "cook_time": {"cook_minutes"}, "total_time": {"total_minutes"},
+	"servings": {"servings_min", "servings_max"},
+}
+
 // Fields Paprika returns on read but its own client leaves out of a recipe write.
 var recipeReadOnly = []string{"photo_url", "on_grocery_list"}
 
@@ -43,6 +51,11 @@ func (c *Client) WriteRecipe(ctx context.Context, current Raw, edit RecipeEdit) 
 			return nil, &Error{Kind: KindInvalid, Op: op, Message: field + " is not an editable recipe field"}
 		}
 		set[field] = v
+		for _, n := range structuredFrom[field] {
+			if old, ok := obj[n]; ok && string(old) != "null" && v != textOf(obj[field]) {
+				obj[n] = json.RawMessage("null")
+			}
+		}
 	}
 	for field, v := range set {
 		raw, err := json.Marshal(v)
@@ -83,4 +96,11 @@ func newRecipeHash() (string, error) {
 		return "", &Error{Kind: KindInvalid, Op: "write recipe", Message: "no random source for the recipe hash", Err: err}
 	}
 	return fmt.Sprintf("%X", b), nil
+}
+
+// textOf decodes a JSON string value, "" for anything else.
+func textOf(raw json.RawMessage) string {
+	var s string
+	_ = json.Unmarshal(raw, &s)
+	return s
 }
