@@ -20,7 +20,7 @@ func TestWriteRecipeSendsTheWholeRecipeBack(t *testing.T) {
 	}
 	before := fake.Recipe(uid)
 	rating, notes := 2, "Line one.\nLine two / with a slash."
-	sent, err := c.WriteRecipe(ctx, current, paprika.RecipeEdit{Rating: &rating, Notes: &notes})
+	sent, err := c.WriteRecipe(ctx, current, paprika.RecipeEdit{Rating: &rating, Text: map[string]string{"notes": notes}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestWriteRecipeSendsTheWholeRecipeBack(t *testing.T) {
 	if hash, _ := body["hash"].(string); len(hash) != 16 || hash == before["hash"] || hash != fake.Recipe(uid)["hash"] {
 		t.Fatalf("stamped hash %v (was %v, stored %v), want a new 16-digit one", body["hash"], before["hash"], fake.Recipe(uid)["hash"])
 	}
-	again, err := c.WriteRecipe(ctx, current, paprika.RecipeEdit{Rating: &rating, Notes: &notes})
+	again, err := c.WriteRecipe(ctx, current, paprika.RecipeEdit{Rating: &rating, Text: map[string]string{"notes": notes}})
 	if err != nil {
 		t.Fatal(err)
 	}

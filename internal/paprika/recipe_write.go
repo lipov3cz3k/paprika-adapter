@@ -6,14 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 )
 
-// RecipeEdit names the recipe fields a caller may overwrite. Nil leaves a field as it is.
+// RecipeEdit names the recipe fields a caller may overwrite. Nil, or a text
+// field absent from Text, leaves a field as it is.
 type RecipeEdit struct {
-	Rating      *int    `json:"rating,omitempty"`
-	Notes       *string `json:"notes,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Directions  *string `json:"directions,omitempty"`
+	Rating     *int              `json:"rating,omitempty"`
+	Text       map[string]string `json:"text,omitempty"`       // one of RecipeTextFields -> its new value
+	Categories *[]string         `json:"categories,omitempty"` // category uids; replaces the whole list
+}
+
+// RecipeTextFields are the recipe's text fields a RecipeEdit may overwrite, in the order edits list them.
+var RecipeTextFields = []string{
+	"notes", "description", "directions", "name", "ingredients", "servings",
+	"prep_time", "cook_time", "total_time", "difficulty", "source", "source_url", "nutritional_info",
 }
 
 // Fields Paprika returns on read but its own client leaves out of a recipe write.
@@ -30,7 +37,14 @@ func (c *Client) WriteRecipe(ctx context.Context, current Raw, edit RecipeEdit) 
 	if err := json.Unmarshal(current.JSON, &obj); err != nil || current.UID == "" {
 		return nil, &Error{Kind: KindInvalid, Op: op, Message: "current recipe is not a complete Paprika recipe object"}
 	}
-	for field, v := range map[string]any{"rating": edit.Rating, "notes": edit.Notes, "description": edit.Description, "directions": edit.Directions} {
+	set := map[string]any{"rating": edit.Rating, "categories": edit.Categories}
+	for field, v := range edit.Text {
+		if !slices.Contains(RecipeTextFields, field) {
+			return nil, &Error{Kind: KindInvalid, Op: op, Message: field + " is not an editable recipe field"}
+		}
+		set[field] = v
+	}
+	for field, v := range set {
 		raw, err := json.Marshal(v)
 		if err != nil {
 			return nil, &Error{Kind: KindInvalid, Op: op, Message: field + " is not serialisable"}

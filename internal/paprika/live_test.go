@@ -23,7 +23,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -252,8 +254,14 @@ func TestLiveRecipeEdit(t *testing.T) {
 
 	stamp := "[adapter-it] " + time.Now().UTC().Format(time.RFC3339)
 	rating := was.Rating%5 + 1
-	notes, description, directions := stamp+" notes\nsecond line / with a slash", stamp+" description", stamp+" step one\nstep two"
-	if _, err := c.WriteRecipe(ctx, original, RecipeEdit{Rating: &rating, Notes: &notes, Description: &description, Directions: &directions}); err != nil {
+	text := map[string]string{
+		"notes": stamp + " notes\nsecond line / with a slash", "description": stamp + " description", "directions": stamp + " step one\nstep two",
+		"ingredients": stamp + " 1 egg\n200 g flour", "prep_time": "11 min", "cook_time": "22 min", "total_time": "33 min",
+		"servings": "7", "difficulty": "Easy", "source": stamp + " source", "source_url": "https://example.test/adapter-it",
+		"nutritional_info": stamp + " 100 kcal",
+	}
+	noCategories := []string{}
+	if _, err := c.WriteRecipe(ctx, original, RecipeEdit{Rating: &rating, Text: text, Categories: &noCategories}); err != nil {
 		t.Fatalf("edit: %v", err)
 	}
 	t.Cleanup(func() {
@@ -261,7 +269,7 @@ func TestLiveRecipeEdit(t *testing.T) {
 		defer cancel()
 		now, err := c.Recipe(ctx, uid)
 		if err == nil {
-			_, err = c.WriteRecipe(ctx, now, RecipeEdit{Rating: &was.Rating, Notes: &was.Notes, Description: &was.Description, Directions: &was.Directions})
+			_, err = c.WriteRecipe(ctx, now, RecipeEdit{Rating: &was.Rating, Text: recipeText(was), Categories: &was.Categories})
 		}
 		if err != nil {
 			t.Errorf("RESTORE FAILED, put back rating %d and the texts of %q by hand: %v", was.Rating, was.Name, err)
@@ -273,7 +281,7 @@ func TestLiveRecipeEdit(t *testing.T) {
 			return
 		}
 		got, _ := Decode[Recipe](back.JSON)
-		if got.Rating != was.Rating || got.Notes != was.Notes || got.Description != was.Description || got.Directions != was.Directions {
+		if got.Rating != was.Rating || !maps.Equal(recipeText(got), recipeText(was)) || !slices.Equal(got.Categories, was.Categories) {
 			t.Errorf("restore did not take; check %q in the app", was.Name)
 		}
 	})
@@ -286,8 +294,13 @@ func TestLiveRecipeEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Rating != rating || got.Notes != notes || got.Description != description || got.Directions != directions {
-		t.Fatalf("read back rating=%d notes=%q description=%q directions=%q", got.Rating, got.Notes, got.Description, got.Directions)
+	if got.Rating != rating || len(got.Categories) != 0 {
+		t.Fatalf("read back rating=%d categories=%v", got.Rating, got.Categories)
+	}
+	for field, want := range text {
+		if recipeText(got)[field] != want {
+			t.Errorf("read back %s=%q, wrote %q", field, recipeText(got)[field], want)
+		}
 	}
 	if got.Hash == was.Hash {
 		t.Error("the hash did not change with the edit")
@@ -298,7 +311,10 @@ func TestLiveRecipeEdit(t *testing.T) {
 	_ = json.Unmarshal(edited.JSON, &after)
 	for field, old := range before {
 		switch field {
-		case "rating", "notes", "description", "directions", "hash", "photo_url":
+		case "rating", "categories", "hash", "photo_url":
+			continue
+		}
+		if _, edited := text[field]; edited {
 			continue
 		}
 		if string(after[field]) != string(old) {
@@ -620,4 +636,13 @@ func liveFind(t *testing.T, c *Client, col Collection, uid string) (Raw, bool) {
 		}
 	}
 	return Raw{}, false
+}
+
+// recipeText gives the editable text fields of a recipe as RecipeEdit.Text names them.
+func recipeText(r Recipe) map[string]string {
+	return map[string]string{
+		"name": r.Name, "ingredients": r.Ingredients, "directions": r.Directions, "description": r.Description, "notes": r.Notes,
+		"nutritional_info": r.NutritionalInfo, "servings": r.Servings, "prep_time": r.PrepTime, "cook_time": r.CookTime,
+		"total_time": r.TotalTime, "difficulty": r.Difficulty, "source": r.Source, "source_url": r.SourceURL,
+	}
 }

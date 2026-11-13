@@ -354,11 +354,11 @@
                 "additionalProperties": false,
                 "properties": {
                   "field": {
-                    "description": "rating, notes, description or directions",
+                    "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                     "type": "string"
                   },
                   "from": {
-                    "description": "value before the change; a rating is given as a number, 0 = unrated",
+                    "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                     "type": "string"
                   },
                   "to": {
@@ -2333,11 +2333,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -2890,11 +2890,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -3444,11 +3444,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -4015,11 +4015,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -4580,11 +4580,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -5123,11 +5123,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {
@@ -5327,16 +5327,50 @@
       "readOnlyHint": false,
       "title": "Propose recipe edit"
     },
-    "description": "Prepare a change to an existing recipe: its star rating, notes, description or directions. Writes nothing. A given field REPLACES what the recipe has; append_note adds to the notes instead. Returns a proposal_id, a summary and the old and new value of every field to show the user.",
+    "description": "Prepare a change to an existing recipe: its name, ingredients, directions, description, notes, times, servings, source, star rating or categories. Writes nothing. A given field REPLACES what the recipe has; append_note adds to the notes instead. Returns a proposal_id, a summary and the old and new value of every field to show the user.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
+        "add_categories": {
+          "description": "put the recipe in these categories too, by name; they must exist in Paprika",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
         "append_note": {
           "description": "text added as a new paragraph after the existing notes; cannot be combined with notes",
           "type": "string"
         },
+        "categories": {
+          "description": "REPLACES the recipe's categories with these, by name; they must exist in Paprika; an empty list removes all. Not together with add_categories or remove_categories",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "cook_time": {
+          "description": "cooking time as free text, e.g. 1 hr 20 min; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "description": {
           "description": "REPLACES the recipe's description; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "difficulty": {
+          "description": "difficulty as free text, e.g. Easy; an empty string clears it",
           "type": [
             "null",
             "string"
@@ -5349,8 +5383,36 @@
             "string"
           ]
         },
+        "ingredients": {
+          "description": "REPLACES the ingredient list in full, one ingredient per line, as Paprika stores it (e.g. 200 g flour); cannot be empty",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "name": {
+          "description": "rename the recipe; cannot be empty",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "notes": {
           "description": "REPLACES the recipe's notes; an empty string clears them. To add to the notes use append_note instead",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "nutritional_info": {
+          "description": "REPLACES the nutrition text; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "prep_time": {
+          "description": "preparation time as free text, e.g. 15 min; an empty string clears it",
           "type": [
             "null",
             "string"
@@ -5361,6 +5423,44 @@
           "type": [
             "null",
             "integer"
+          ]
+        },
+        "remove_categories": {
+          "description": "take the recipe out of these categories, by name",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "servings": {
+          "description": "servings as free text, e.g. 4 or 4-6 portions; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "source": {
+          "description": "where the recipe comes from, e.g. a book or site name; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "source_url": {
+          "description": "link to the original recipe; an empty string clears it",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "total_time": {
+          "description": "total time as free text; an empty string clears it",
+          "type": [
+            "null",
+            "string"
           ]
         },
         "uid": {
@@ -5692,11 +5792,11 @@
                     "additionalProperties": false,
                     "properties": {
                       "field": {
-                        "description": "rating, notes, description or directions",
+                        "description": "rating, categories, or the name of a text field such as ingredients or prep_time",
                         "type": "string"
                       },
                       "from": {
-                        "description": "value before the change; a rating is given as a number, 0 = unrated",
+                        "description": "value before the change; a rating is given as a number, 0 = unrated; categories as names separated by commas",
                         "type": "string"
                       },
                       "to": {

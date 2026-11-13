@@ -88,7 +88,7 @@ text minus blank lines.
 ## Write tools (only with `PAPRIKA_ENABLE_WRITES=true`)
 
 There are exactly eight: seven that prepare a write and one that performs it. Three of the writes only create
-new rows. Three change existing data: `propose_recipe_edit` (four fields of a recipe),
+new rows. Three change existing data: `propose_recipe_edit` (text fields, rating and categories of a recipe),
 `propose_meal_plan_edit` (one meal-plan entry) and `propose_pantry_edit` (one pantry item). One removes data:
 `propose_pantry_removal`. Nothing else can be deleted or cleared.
 
@@ -100,7 +100,7 @@ new rows. Three change existing data: `propose_recipe_edit` (four fields of a re
 | `propose_pantry_items` | `items[]` 1-25 of `{ingredient, quantity?, expiration_date?}`; `allow_duplicates?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_items[]`, `skipped[]`). Items are created in stock with today's date (in `PAPRIKA_TZ`) as purchase date |
 | `propose_pantry_edit` | `item_uid` (from `list_pantry`), and at least one of `ingredient`, `quantity` (`""` clears), `in_stock`, `expiration_date`, `clear_expiration`, `purchase_date`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_before[]`, `pantry_items[]`, one item each) |
 | `propose_pantry_removal` | `item_uids[]` 1-25 (from `list_pantry`) | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_removed[]`) |
-| `propose_recipe_edit` | `uid`, and at least one of `rating` (0-5, 0 = unrated), `notes`, `append_note`, `description`, `directions` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipe_edit.changes[]` with `field`, `from`, `to`) |
+| `propose_recipe_edit` | `uid`, and at least one of `rating` (0-5, 0 = unrated), `name`, `ingredients`, `directions`, `description`, `notes`, `append_note`, `nutritional_info`, `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`, `categories` (replace), `add_categories`, `remove_categories` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `recipe_edit.changes[]` with `field`, `from`, `to`) |
 | `commit_proposal` | `proposal_id`, `confirm: true` | Writes the proposal, reads it back, returns `status`, `verified`, and the rows as read back |
 
 ### How a write goes
@@ -124,11 +124,17 @@ new rows. Three change existing data: `propose_recipe_edit` (four fields of a re
 
 ### Editing a recipe
 
-`propose_recipe_edit` overwrites text of a recipe. What that means:
+`propose_recipe_edit` overwrites fields of a recipe. What that means:
 
-- `notes`, `description` and `directions` **replace** the field. `append_note` instead adds a paragraph after
-  the existing notes, and is the right choice for "add a note". An empty `notes` or `description` clears it;
-  `directions` cannot be emptied.
+- Every text field given **replaces** what the recipe has: `name`, `ingredients` (the whole list, one
+  ingredient per line, as Paprika stores it), `directions`, `description`, `notes`, `nutritional_info`, and the
+  one-line `servings`, `prep_time`, `cook_time`, `total_time`, `difficulty`, `source`, `source_url`.
+  Times and servings are free text, as in the apps. An empty string clears a field; `name`, `ingredients`
+  and `directions` cannot be emptied.
+- `append_note` instead adds a paragraph after the existing notes, and is the right choice for "add a note".
+- `categories` replaces the recipe's categories (an empty list removes all); `add_categories` and
+  `remove_categories` change only the ones named, applied to what the recipe has at commit time. Categories
+  are named as in Paprika (case does not matter) and must exist: the adapter does not create categories.
 - The proposal lists every change with the old and the new value. That is what the user should see before
   approving, and the commit result repeats it, so the old text can be put back with another edit.
 - At commit the recipe is read from Paprika, the edited fields are overwritten on that copy, and the whole
@@ -138,7 +144,7 @@ new rows. Three change existing data: `propose_recipe_edit` (four fields of a re
   was chosen deliberately. Edits to other fields survive. An edit made in an app during the fraction of a
   second between the adapter's read and its write would be lost whatever the field.
 - Recipes in the trash cannot be edited. Proposing values the recipe already has answers `duplicate`.
-- Name, ingredients, times, servings, categories, photos and everything else cannot be changed.
+- Photos, favourite and pinned state, scale and the trash flag cannot be changed.
 
 ### Editing a meal-plan entry
 

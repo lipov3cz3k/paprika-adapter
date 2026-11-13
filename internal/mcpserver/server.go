@@ -128,7 +128,8 @@ func New(d Deps) *mcp.Server {
 				"in the pantry, use propose_pantry_edit with in_stock=false instead. Returns a proposal_id, a summary and the items "+
 				"that would be removed.", false, false), s.proposePantryRemoval)
 		add(reg, writeTool("propose_recipe_edit", "Propose recipe edit",
-			"Prepare a change to an existing recipe: its star rating, notes, description or directions. Writes nothing. "+
+			"Prepare a change to an existing recipe: its name, ingredients, directions, description, notes, times, servings, "+
+				"source, star rating or categories. Writes nothing. "+
 				"A given field REPLACES what the recipe has; append_note adds to the notes instead. Returns a proposal_id, a summary "+
 				"and the old and new value of every field to show the user.", false, false), s.proposeRecipeEdit)
 		add(reg, writeTool("commit_proposal", "Commit proposal",
