@@ -249,12 +249,12 @@ func (c *Client) Notify(ctx context.Context) error {
 
 // upsert posts rows to a collection endpoint as a JSON array.
 func (c *Client) upsert(ctx context.Context, col Collection, rows any) error {
-	return c.postData(ctx, SyncPath+string(col)+"/", "file", rows)
+	return c.postData(ctx, SyncPath+string(col)+"/", rows)
 }
 
 // postData posts payload the only way Paprika accepts a write: gzipped JSON in
 // a multipart part named "data". It is sent once and never retried here.
-func (c *Client) postData(ctx context.Context, path, filename string, payload any) error {
+func (c *Client) postData(ctx context.Context, path string, payload any) error {
 	op := "POST " + opPath(path)
 	raw, err := json.Marshal(payload)
 	if err != nil {
@@ -268,7 +268,7 @@ func (c *Client) postData(ctx context.Context, path, filename string, payload an
 	}
 	var form bytes.Buffer
 	mw := multipart.NewWriter(&form)
-	part, err := mw.CreateFormFile("data", filename)
+	part, err := mw.CreateFormFile("data", "file") // the file name the Paprika apps use for every write
 	if err == nil {
 		_, err = part.Write(gz.Bytes())
 	}

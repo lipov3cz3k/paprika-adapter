@@ -16,6 +16,7 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -443,9 +444,8 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 // writeRecipe replaces a whole recipe with the single object posted to its URL,
 // the way Paprika does: whatever the body leaves out is gone afterwards.
 func (s *Server) writeRecipe(w http.ResponseWriter, r *http.Request, uid string) {
-	file, _, err := r.FormFile("data")
-	if err != nil {
-		fail(w, http.StatusBadRequest, "Missing data.")
+	file, ok := dataPart(w, r)
+	if !ok {
 		return
 	}
 	defer file.Close()
@@ -486,6 +486,23 @@ func (s *Server) writeRecipe(w http.ResponseWriter, r *http.Request, uid string)
 	result(w, true)
 }
 
+// dataPart opens the multipart part every write carries. Paprika is not known
+// to look at the part's file name; the fake insists on the one the apps send so
+// that the adapter keeps sending it too.
+func dataPart(w http.ResponseWriter, r *http.Request) (multipart.File, bool) {
+	file, header, err := r.FormFile("data")
+	if err != nil {
+		fail(w, http.StatusBadRequest, "Missing data.")
+		return nil, false
+	}
+	if header.Filename != "file" {
+		file.Close()
+		fail(w, http.StatusBadRequest, "Unexpected file name.")
+		return nil, false
+	}
+	return file, true
+}
+
 // Recipe returns a copy of one recipe as the fake currently holds it.
 func (s *Server) Recipe(uid string) map[string]any {
 	s.mu.Lock()
@@ -505,9 +522,8 @@ func (s *Server) Recipe(uid string) map[string]any {
 // write accepts the only body shape Paprika accepts: multipart part "data"
 // holding a gzipped JSON array of complete objects.
 func (s *Server) write(w http.ResponseWriter, r *http.Request, collection string) {
-	file, _, err := r.FormFile("data")
-	if err != nil {
-		fail(w, http.StatusBadRequest, "Missing data.")
+	file, ok := dataPart(w, r)
+	if !ok {
 		return
 	}
 	defer file.Close()

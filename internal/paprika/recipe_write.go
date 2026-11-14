@@ -53,7 +53,7 @@ func (c *Client) WriteRecipe(ctx context.Context, current Raw, edit RecipeEdit) 
 		return nil, &Error{Kind: KindInvalid, Op: op, Message: "recipe is not serialisable"}
 	}
 	// A recipe is posted as one object to its own URL, not as an array to a collection URL.
-	if err := c.postData(ctx, SyncPath+"recipe/"+url.PathEscape(current.UID)+"/", "data.gz", json.RawMessage(body)); err != nil {
+	if err := c.postData(ctx, SyncPath+"recipe/"+url.PathEscape(current.UID)+"/", json.RawMessage(body)); err != nil {
 		return nil, err
 	}
 	return body, nil
