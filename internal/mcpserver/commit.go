@@ -45,7 +45,23 @@ const (
 	statusAlreadyCommitted = "already_committed"
 )
 
+// notifyTimeout bounds the ping after a commit; the write is done by then.
+const notifyTimeout = 5 * time.Second
+
 func (s *server) commitProposal(ctx context.Context, in CommitIn, out *CommitOut) *ToolError {
+	terr := s.commitLocked(ctx, in, out)
+	if terr == nil && out.Status == statusCommitted {
+		// The write is in Paprika and recorded. Without this ping the other devices
+		// would only see it on their next timed sync; a failed ping costs just that.
+		// It runs outside writeMu so that a slow ping does not hold up other commits.
+		nctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), notifyTimeout)
+		_ = s.Client.Notify(nctx)
+		cancel()
+	}
+	return terr
+}
+
+func (s *server) commitLocked(ctx context.Context, in CommitIn, out *CommitOut) *ToolError {
 	id := strings.TrimSpace(in.ProposalID)
 	if id == "" {
 		return invalid("proposal_id is required")
@@ -114,8 +130,9 @@ func (s *server) commitProposal(ctx context.Context, in CommitIn, out *CommitOut
 	out.CommittedAt = s.Now().UTC().Format(time.RFC3339)
 	// If this record is lost the next commit simply finds the rows in Paprika and
 	// verifies them again, so a failure here must not turn a good write into an error.
+	// The write happened, so the record is kept even if the caller has gone away.
 	if res, err := json.Marshal(out.CommitResult); err == nil {
-		_ = s.Store.CommitProposal(ctx, id, res)
+		_ = s.Store.CommitProposal(context.WithoutCancel(ctx), id, res)
 	}
 	return nil
 }

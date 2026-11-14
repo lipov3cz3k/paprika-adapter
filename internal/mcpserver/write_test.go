@@ -329,3 +329,32 @@ func TestApprovalNoneWritesWithoutAskingAnyone(t *testing.T) {
 		t.Fatalf("the agent is still told to seek approval: %s", told)
 	}
 }
+
+func TestCommitPingsPaprikaSoOtherDevicesSync(t *testing.T) {
+	h := newHarness(t, true)
+	p := groceryProposal(h, "oat milk").Proposal
+	if h.posts("notify") != 0 {
+		t.Fatal("a proposal pinged Paprika")
+	}
+	h.fake.DropNextWriteAck()
+	h.fails("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}, "upstream_unavailable")
+	if h.posts("notify") != 0 {
+		t.Fatal("an unverified write pinged Paprika")
+	}
+	// The retry finds the rows already there and writes nothing, but still pings.
+	h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true})
+	h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true})
+	if h.posts("groceries") != 1 || h.posts("notify") != 1 {
+		t.Fatalf("posts: groceries=%d notify=%d, want 1 and 1", h.posts("groceries"), h.posts("notify"))
+	}
+}
+
+func TestFailedPingDoesNotFailTheCommit(t *testing.T) {
+	h := newHarness(t, true)
+	p := groceryProposal(h, "oat milk").Proposal
+	h.fake.FailNext("POST "+paprika.SyncPath+"notify/", 503)
+	c := h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true})
+	if c.Status != "committed" || !c.Verified || h.posts("notify") != 1 {
+		t.Fatalf("commit = %+v notify posts=%d", c, h.posts("notify"))
+	}
+}

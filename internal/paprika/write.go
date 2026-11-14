@@ -230,6 +230,17 @@ func checkNewUID(op, uid string) error {
 	return nil
 }
 
+// Notify tells Paprika that this client changed something, as the apps do after
+// a sync run that pushed rows. Paprika passes it on to the account's other
+// devices, which then sync at once instead of on their next timer.
+func (c *Client) Notify(ctx context.Context) error {
+	_, err := c.call(ctx, http.MethodPost, SyncPath+"notify/", nil)
+	if err != nil {
+		c.log.Warn("paprika notify failed", "kind", string(KindOf(err)))
+	}
+	return err
+}
+
 // upsert posts rows to a collection endpoint as a JSON array.
 func (c *Client) upsert(ctx context.Context, col Collection, rows any) error {
 	return c.postData(ctx, SyncPath+string(col)+"/", "file", rows)

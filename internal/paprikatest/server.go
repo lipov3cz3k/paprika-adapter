@@ -1,7 +1,8 @@
 // Package paprikatest is an in-memory stand-in for the Paprika sync API, seeded
 // from synthetic fixtures. It reproduces the behaviours the adapter depends on:
 // form login, bearer auth, the result/error envelope (including errors sent as
-// HTTP 200), change counters, and gzipped-multipart upserts keyed by uid.
+// HTTP 200), change counters, gzipped-multipart upserts keyed by uid, and the
+// notify ping.
 package paprikatest
 
 import (
@@ -377,6 +378,8 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		fail(w, http.StatusOK, "Photo not found.")
+	case r.Method == http.MethodPost && name == "notify":
+		result(w, true)
 	case r.Method == http.MethodGet && s.rows[name] != nil:
 		result(w, live(s.rows[name]))
 	case r.Method == http.MethodPost && writable[name]:
