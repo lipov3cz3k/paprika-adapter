@@ -73,8 +73,9 @@ it cannot overwrite an edit made in an app. What can still happen:
 | Recipe edited in the app, the agent shows the old text | recipe hash not re-checked yet | wait `PAPRIKA_MAX_AGE` or refresh; the cached copy is replaced, never merged |
 | Recipes stuck `stale` with "N of M changed recipes could not be fetched" | some recipe fetches failed | it resumes on the next sync; persistent failure on the same recipes points at a protocol change |
 
-To undo a write, delete the item or meal in the Paprika app. Only pantry items can be removed through the
-adapter (`propose_pantry_removal`).
+To undo a write, delete the item or meal in the Paprika app, or through the adapter with
+`propose_meal_plan_removal`, `propose_grocery_removal` or `propose_pantry_removal`. A grocery check-off is
+undone with `propose_grocery_check_off` and `undo: true`.
 
 To undo a pantry edit, propose the reverse: the commit result gives the item as it was in `pantry_before`.
 To undo a pantry removal, add the item again with `propose_pantry_items`, using `pantry_removed` from the

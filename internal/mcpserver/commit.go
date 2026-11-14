@@ -20,7 +20,7 @@ type CommitIn struct {
 // CommitResult is what a commit reports, and what is stored to answer repeats.
 type CommitResult struct {
 	ProposalID     string          `json:"proposal_id,omitempty"`
-	Kind           string          `json:"kind,omitempty" jsonschema:"meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash"`
+	Kind           string          `json:"kind,omitempty" jsonschema:"meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash"`
 	Status         string          `json:"status,omitempty" jsonschema:"committed = written and verified by this call; already_committed = this proposal was committed before and nothing was written again"`
 	Verified       bool            `json:"verified" jsonschema:"true when every written entity was read back from Paprika after the write"`
 	CommittedAt    string          `json:"committed_at,omitempty" jsonschema:"RFC 3339 UTC time of the verified commit"`
@@ -28,6 +28,9 @@ type CommitResult struct {
 	MealBefore     *MealEntry      `json:"meal_before,omitempty" jsonschema:"for an edit: the entry as it was before"`
 	List           *NamedRef       `json:"list,omitempty"`
 	Items          []GroceryEntry  `json:"items,omitempty" jsonschema:"the grocery items as read back from Paprika"`
+	GroceryBefore  []GroceryEntry  `json:"grocery_before,omitempty" jsonschema:"for a grocery edit or check-off: the items as they were before"`
+	GroceryGone    []GroceryEntry  `json:"grocery_removed,omitempty" jsonschema:"the removed grocery items as they were; Paprika no longer returns them"`
+	MealsRemoved   []MealEntry     `json:"meals_removed,omitempty" jsonschema:"the removed meal-plan entries as they were; Paprika no longer returns them"`
 	Pantry         []PantryEntry   `json:"pantry_items,omitempty" jsonschema:"the pantry items as read back from Paprika"`
 	PantryBefore   []PantryEntry   `json:"pantry_before,omitempty" jsonschema:"for an edit: the item as it was before"`
 	PantryRemoved  []PantryEntry   `json:"pantry_removed,omitempty" jsonschema:"the removed pantry items as they were; Paprika no longer returns them"`
@@ -126,6 +129,14 @@ func (s *server) commitLocked(ctx context.Context, in CommitIn, out *CommitOut) 
 		terr = s.commitRecipeCreate(ctx, p, out)
 	case kindRecipeTrash:
 		terr = s.commitRecipeTrash(ctx, p, out)
+	case kindGroceryEdit:
+		terr = s.commitGroceryEdit(ctx, p, out)
+	case kindGroceryCheckOff:
+		terr = s.commitGroceryCheckOff(ctx, p, out)
+	case kindGroceryRemoval:
+		terr = s.commitGroceryRemoval(ctx, p, out)
+	case kindMealRemoval:
+		terr = s.commitMealRemoval(ctx, p, out)
 	default:
 		terr = invalid("proposal has an unknown kind")
 	}

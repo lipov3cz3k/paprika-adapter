@@ -25,7 +25,8 @@ var ReadTools = []string{
 
 // ProposeTools are the write tools that prepare a proposal. They are served only when writes are enabled.
 var ProposeTools = []string{
-	"propose_meal_plan_entry", "propose_meal_plan_edit", "propose_grocery_items", "propose_pantry_items",
+	"propose_meal_plan_entry", "propose_meal_plan_edit", "propose_meal_plan_removal", "propose_grocery_items",
+	"propose_grocery_edit", "propose_grocery_check_off", "propose_grocery_removal", "propose_pantry_items",
 	"propose_pantry_edit", "propose_pantry_removal", "propose_recipe_edit", "propose_recipe_create", "propose_recipe_trash",
 }
 
@@ -84,15 +85,19 @@ func allowed(list []string) map[string]bool {
 
 // proposeToolOf names the propose tool that creates each kind of proposal.
 var proposeToolOf = map[string]string{
-	kindMeal:          "propose_meal_plan_entry",
-	kindMealEdit:      "propose_meal_plan_edit",
-	kindGroceries:     "propose_grocery_items",
-	kindPantry:        "propose_pantry_items",
-	kindPantryEdit:    "propose_pantry_edit",
-	kindPantryRemoval: "propose_pantry_removal",
-	kindRecipe:        "propose_recipe_edit",
-	kindRecipeCreate:  "propose_recipe_create",
-	kindRecipeTrash:   "propose_recipe_trash",
+	kindMeal:            "propose_meal_plan_entry",
+	kindMealEdit:        "propose_meal_plan_edit",
+	kindMealRemoval:     "propose_meal_plan_removal",
+	kindGroceryEdit:     "propose_grocery_edit",
+	kindGroceryCheckOff: "propose_grocery_check_off",
+	kindGroceryRemoval:  "propose_grocery_removal",
+	kindGroceries:       "propose_grocery_items",
+	kindPantry:          "propose_pantry_items",
+	kindPantryEdit:      "propose_pantry_edit",
+	kindPantryRemoval:   "propose_pantry_removal",
+	kindRecipe:          "propose_recipe_edit",
+	kindRecipeCreate:    "propose_recipe_create",
+	kindRecipeTrash:     "propose_recipe_trash",
 }
 
 // commitAllowed says whether the allowlist lets a proposal of this kind be committed:

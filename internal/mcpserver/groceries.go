@@ -68,6 +68,7 @@ type GroceryEntry struct {
 	Quantity    string `json:"quantity,omitempty"`
 	Instruction string `json:"instruction,omitempty"`
 	Aisle       string `json:"aisle,omitempty"`
+	ListUID     string `json:"list_uid" jsonschema:"uid of the grocery list the item is on"`
 	Purchased   bool   `json:"purchased"`
 	Recipe      string `json:"recipe,omitempty" jsonschema:"name of the recipe the item was added from, if any"`
 	RecipeUID   string `json:"recipe_uid,omitempty"`
@@ -127,7 +128,7 @@ func (s *server) groceryList(ctx context.Context, uid string) (*NamedRef, *ToolE
 
 func groceryEntry(it paprika.GroceryItem) GroceryEntry {
 	return GroceryEntry{UID: it.UID, Name: it.Name, Ingredient: it.Ingredient, Quantity: it.Quantity, Instruction: it.Instruction,
-		Aisle: it.Aisle, Purchased: it.Purchased, Recipe: deref(it.Recipe), RecipeUID: deref(it.RecipeUID)}
+		Aisle: it.Aisle, ListUID: it.ListUID, Purchased: it.Purchased, Recipe: deref(it.Recipe), RecipeUID: deref(it.RecipeUID)}
 }
 
 type SyncStatusIn struct {

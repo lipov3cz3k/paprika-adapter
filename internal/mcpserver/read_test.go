@@ -39,15 +39,16 @@ func TestReadOnlyServerExposesNoWriteTools(t *testing.T) {
 
 func TestWriteServerAddsOnlyProposeAndCommit(t *testing.T) {
 	names := toolNames(t, newHarness(t, true))
-	if len(names) != 18 {
-		t.Fatalf("tools = %v, want 18", names)
+	if len(names) != 22 {
+		t.Fatalf("tools = %v, want 22", names)
 	}
-	// Five tools change existing data, each asked for by the household: the recipe edit
+	// These tools change existing data, each asked for by the household: the recipe edit
 	// (its text fields, rating and categories), moving recipes to the trash, the meal-plan
-	// edit (day, meal type, what is planned), the pantry edit and the removal of pantry
-	// items. Nothing else deletes or edits.
-	asked := map[string]bool{"propose_recipe_edit": true, "propose_meal_plan_edit": true, "propose_pantry_edit": true, "propose_pantry_removal": true,
-		"propose_recipe_trash": true}
+	// edit and removal, the grocery edit, check-off and removal, and the pantry edit and
+	// removal. Nothing else deletes or edits.
+	asked := map[string]bool{"propose_recipe_edit": true, "propose_recipe_trash": true, "propose_meal_plan_edit": true,
+		"propose_meal_plan_removal": true, "propose_grocery_edit": true, "propose_grocery_check_off": true,
+		"propose_grocery_removal": true, "propose_pantry_edit": true, "propose_pantry_removal": true}
 	for _, n := range names {
 		if asked[n] {
 			continue

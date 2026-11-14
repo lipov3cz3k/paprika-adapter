@@ -57,6 +57,9 @@ for reads both answer identically (A), and the writes were checked on v3 on
 | 20 | Tell the other devices | `POST /sync/notify/` without a body, after a commit was written and read back. Paprika then sends the account's other devices an `update` event and they sync at once | P | **A** 2026-11-14: `{"result": true}`, and a recipe edit followed by the ping showed up at once in the open macOS and Android apps. A failure is logged and does not fail the commit |
 | 21 | Create a recipe | as 16, to the new uid: the 27 fields of a Paprika 3 save plus `cookbook_uid: null` (the default cookbook), text fields given or `""`, `photo`/`image_url`/`scale` null, `categories` uids, no `metadata_version`, so the apps derive the `*_minutes` and `servings_*` numbers (P) | C, P | **A** 2026-11-12 on v2 without `cookbook_uid`, 2026-11-14 on v3 with it |
 | 22 | Move a recipe to the trash, or out | as 16, with `in_trash` set and a new hash | C | **A** 2026-11-12 on v2 and 2026-11-14 on v3, both ways |
+| 23 | Edit or tick off grocery items | `POST /sync/groceries/` with each whole existing row under its uid, changed fields (`name`, `ingredient`, `quantity`, `instruction`, `aisle`/`aisle_uid`, `list_uid`/`order_flag`, `purchased`) overwritten | C (whole-object upsert, as 17 and 18) | **A** 2026-11-13 (`TestLiveGroceryEdit`; moving to another list and setting an aisle not exercised) |
+| 24 | Remove grocery items | `POST /sync/groceries/` with each whole existing row and `deleted: true` | C (soft delete) | soft delete of a new item **A** 2026-10-09 (cleanup of `TestLiveGroceryWrite`); of a whole read row **A** 2026-11-13 (`TestLiveGroceryEdit`) |
+| 25 | Remove meal-plan entries | `POST /sync/meals/` with each whole existing row and `deleted: true` | C (soft delete) | soft delete of a new entry **A** 2026-10-09 (cleanup of `TestLiveMealWrite`); of a whole read row **A** 2026-11-13 (`TestLiveMealRemoval`) |
 
 Both `www.paprikaapp.com` and `paprikaapp.com` answered identically (L). The adapter uses `www`.
 
@@ -318,6 +321,7 @@ Not sync, listed so that a new path in a later version stands out. All under `ap
 |---|---|---|---|
 | 2026-10-09, 2026-10-10 | Paprika 3.8.4 | v2 | every read; the three create-only writes, the meal-plan edit, the pantry edit and removal |
 | 2026-11-12 | Paprika 4.0.22 | v2 against v3 | every read, read-only |
+| 2026-11-13 | Paprika 4.0 | v2 | the grocery edit, check-off and removal, the meal-plan removal |
 | 2026-11-14 | Paprika 4.0.22, Paprika 4 for Android | v3 | every read and every write, among them the recipe edit for the first time, and `sync/notify/` |
 
 Still to do: the tool path (propose, approve, commit) has run against the fake only; the integration tests
@@ -337,6 +341,8 @@ Reads were checked first from the cache a full sync produced, then with the live
 | Pantry items (`TestLivePantryWrite`) | passed: one item with a quantity and an expiration date was accepted and returned by `GET /sync/pantry/` with the same values, in stock; posting the same uid again left exactly one row; gone after the soft delete. The returned row has the 11 expected fields, which also settles the pantry field set below |
 | Pantry edit and removal (`TestLivePantryEdit`, 2026-10-10) | passed: an item the test created itself was renamed, given another quantity, marked out of stock and given an expiration and a purchase date by posting its whole row again under the same uid; Paprika returned the changed row with every other field as before. Posting it with `has_expiration: false`, `expiration_date: null` removed the expiration date. Posting the whole row with `deleted: true` made `GET /sync/pantry/` stop returning it |
 | Aisle of a new grocery item | sent `aisle: ""`, `aisle_uid: null`; Paprika stored and returned exactly that, it does not assign an aisle itself. The apps then look the aisle up by its name and fall back to the default aisle (P) |
+| Grocery edit and removal (`TestLiveGroceryEdit`, 2026-11-13) | passed against the list `testovací seznam`: an item the test created itself was given another name, ingredient, quantity and note and ticked off by posting its whole row again under the same uid; Paprika returned the changed row, on the same list, with every other field as before and no field added or lost. Posting the whole read row with `deleted: true` made `GET /sync/groceries/` stop returning it |
+| Meal-plan removal (`TestLiveMealRemoval`, 2026-11-13) | passed: an entry the test created itself on 2027-12-31 was read back and posted whole with `deleted: true`; `GET /sync/meals/` stopped returning it |
 
 | Collection | Rows | Result |
 |---|---|---|

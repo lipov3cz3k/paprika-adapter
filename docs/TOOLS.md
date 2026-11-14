@@ -46,6 +46,7 @@ Conventions: uids are Paprika's own and stable. Adapter timestamps are RFC 3339 
 | `plan_required` | Paprika refused the request because of the account's plan, typically a write after the subscription lapsed (reads keep working) | no, see runbook |
 | `rejected` | Paprika refused the request | no |
 | `duplicate` | the write would duplicate something already in Paprika | no |
+| `uid_conflict` | Paprika holds something else under the proposal's uid than when it was proposed; nothing was written | propose again |
 | `confirmation_required` | `commit_proposal` called without `confirm: true` | after approval |
 | `approval_declined` | the user declined the approval prompt | no |
 | `approval_unavailable` | approval is mandatory and the client cannot prompt, or the prompt failed | no |
@@ -65,7 +66,7 @@ Conventions: uids are Paprika's own and stable. Adapter timestamps are RFC 3339 
 | `list_pantry` | `query?`, `in_stock_only?`, `limit?` (1-500, default 100) | `items[]` (`uid`, `ingredient`, `quantity`, `aisle`, `in_stock`, `purchase_date`, `expiration_date`), `total`, `truncated` |
 | `get_meal_plan` | `from?`, `to?` (default: Monday to Sunday of the current week in `PAPRIKA_TZ`; max 92 days) | `from`, `to`, `today`, `timezone`, `meals[]` (`uid`, `date`, `meal_type`, `meal_type_uid`, `name`, `recipe_uid`), `meal_types[]` |
 | `list_grocery_lists` | none | `lists[]` (`uid`, `name`, `is_default`, `items`, `unpurchased`) |
-| `list_grocery_items` | `list_uid`, `include_purchased?`, `limit?` (1-500, default 200) | `list`, `items[]` (`uid`, `name`, `ingredient`, `quantity`, `instruction`, `aisle`, `purchased`, `recipe`, `recipe_uid`), `total`, `truncated` |
+| `list_grocery_items` | `list_uid`, `include_purchased?`, `limit?` (1-500, default 200) | `list`, `items[]` (`uid`, `name`, `ingredient`, `quantity`, `instruction`, `aisle`, `list_uid`, `purchased`, `recipe`, `recipe_uid`), `total`, `truncated` |
 | `sync_status` | `refresh?` (`true` contacts Paprika now) | `healthy`, `writes_enabled`, `paprika_host`, `adapter_version`, and `sync[]` for all ten collections |
 
 ### Photos
@@ -87,18 +88,24 @@ text minus blank lines.
 
 ## Write tools (only with `PAPRIKA_ENABLE_WRITES=true`)
 
-There are exactly ten: nine that prepare a write and one that performs it. Four of the writes only create
-new rows: meal-plan entries, grocery items, pantry items and recipes (`propose_recipe_create`). Three change
-existing data: `propose_recipe_edit` (text fields, rating and categories of a recipe),
-`propose_meal_plan_edit` (one meal-plan entry) and `propose_pantry_edit` (one pantry item).
-`propose_recipe_trash` moves recipes into or out of Paprika's trash. One removes data: `propose_pantry_removal`.
-Nothing else can be deleted or cleared; no recipe is ever deleted for good.
+There are exactly fourteen: thirteen that prepare a write and one that performs it. Four of the writes only
+create new rows: meal-plan entries, grocery items, pantry items and recipes (`propose_recipe_create`). Five
+change existing data: `propose_recipe_edit` (text fields, rating and categories of a recipe),
+`propose_meal_plan_edit` (one meal-plan entry), `propose_grocery_edit` (one grocery item),
+`propose_grocery_check_off` (whether grocery items are bought) and `propose_pantry_edit` (one pantry item).
+`propose_recipe_trash` moves recipes into or out of Paprika's trash. Three remove data:
+`propose_meal_plan_removal`, `propose_grocery_removal` and `propose_pantry_removal`. Grocery lists, aisles and
+meal types cannot be created, changed or deleted; no recipe is ever deleted for good.
 
 | Tool | Arguments | Effect |
 |---|---|---|
 | `propose_meal_plan_entry` | `date`, `meal_type_uid` (from `get_meal_plan.meal_types`), and exactly one of `recipe_uid` or `name`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `expires_at`, `meal`) |
 | `propose_meal_plan_edit` | `meal_uid` (from `get_meal_plan`), and at least one of `date`, `meal_type_uid`, `recipe_uid` or `name`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `meal_before`, `meal`) |
+| `propose_meal_plan_removal` | `meal_uids[]` 1-25 (from `get_meal_plan`) | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `meals_removed[]`) |
 | `propose_grocery_items` | `list_uid` (no default list), `items[]` 1-25 of `{name, quantity?, instruction?}`; `allow_duplicates?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `items[]`, `skipped[]`) |
+| `propose_grocery_edit` | `item_uid` (from `list_grocery_items`), and at least one of `name`, `quantity` (`""` clears), `instruction` (`""` clears), `aisle` (by name), `list_uid`, `purchased`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `grocery_before[]`, `grocery_after[]`, one item each) |
+| `propose_grocery_check_off` | `item_uids[]` 1-25 (from `list_grocery_items`), `undo?`, `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `grocery_before[]`, `grocery_after[]`, `skipped[]`) |
+| `propose_grocery_removal` | exactly one of `item_uids[]` 1-25, or `purchased_on_list_uid` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `grocery_removed[]`) |
 | `propose_pantry_items` | `items[]` 1-25 of `{ingredient, quantity?, expiration_date?}`; `allow_duplicates?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_items[]`, `skipped[]`). Items are created in stock with today's date (in `PAPRIKA_TZ`) as purchase date |
 | `propose_pantry_edit` | `item_uid` (from `list_pantry`), and at least one of `ingredient`, `quantity` (`""` clears), `in_stock`, `expiration_date`, `clear_expiration`, `purchase_date`; `allow_duplicate?` | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_before[]`, `pantry_items[]`, one item each) |
 | `propose_pantry_removal` | `item_uids[]` 1-25 (from `list_pantry`) | Writes nothing. Returns `proposal` (`proposal_id`, `summary`, `pantry_removed[]`) |
@@ -180,7 +187,48 @@ the trash: this adapter never deletes a recipe for good. Recipes already in the 
   an app to the same fields in the meantime is overwritten.
 - If the entry was removed in an app before the commit, nothing is written (`not_found`).
 - An edit that would repeat something already planned for that day and meal type is refused as `duplicate`
-  unless `allow_duplicate` is set. Entries cannot be removed, and only one entry changes per proposal.
+  unless `allow_duplicate` is set. Only one entry changes per proposal.
+
+`propose_meal_plan_removal` removes the entries named in `meal_uids`, the same way `propose_pantry_removal`
+removes pantry items (see below): named by uid only, the summary lists each entry with its day and meal type,
+and the commit posts each row still in Paprika back marked deleted and checks that none is returned.
+There is no restore tool: to undo, plan the entry again with `propose_meal_plan_entry`.
+
+### Grocery items: editing, ticking off, removing
+
+`propose_grocery_edit` changes one existing item, found by its `item_uid`:
+
+- `name` replaces what to buy and `quantity` the amount; the line Paprika shows is rebuilt as
+  `quantity name`. Giving only `quantity` keeps the item's own wording and drops the old amount: `Milk`
+  becomes `2 l Milk`, `1l milk` becomes `2 l milk`, and when the old amount sits inside the line, as in
+  `Milk (1 l)`, the bare ingredient is used: `2 l milk`. A number that is part of the name stays (`7 Up`
+  becomes `2 l 7 Up`). Giving only `name` keeps the amount, even one written only in the line: `2 lemons`
+  becomes `2 limes`. `instruction` replaces the note, `aisle` moves it to an existing aisle (by name),
+  `list_uid` moves it to the end of another list (the end as it is at commit), `purchased` ticks it off or
+  puts it back. Any combination.
+- The proposal shows the item before (`grocery_before`) and after (`grocery_after`); the commit result
+  repeats both (`grocery_before`, `items`).
+- At commit the grocery items are read from Paprika and the edited fields are overwritten on that row; the
+  recipe link and anything else on the row is carried over. If the item was removed meanwhile, nothing is
+  written (`not_found`); if an edit of `name` or `quantity` finds the item renamed or given another amount
+  meanwhile, nothing is written either (`uid_conflict`), as the new line was built from the old wording.
+  Nor when the list or aisle the item is to move to was removed meanwhile (`not_found`).
+- A result that would duplicate an unpurchased item with the same name on the target list (by renaming,
+  moving or un-ticking) is refused as `duplicate` unless `allow_duplicate` is set. An item that already was
+  on the list twice is not refused just for a changed amount or note.
+
+`propose_grocery_check_off` is the "I bought these" tool: it ticks off up to 25 items, on any lists, in one
+approval; `undo: true` puts them back on the list. Items already in that state are reported in `skipped`, and
+so is an item `undo` would put back next to an unpurchased twin on its list, as the edit refuses it, unless
+`allow_duplicate` is set. At commit, items removed in the meantime, or whose twin was added since, are skipped
+as well, and the rest are written in one request.
+
+`propose_grocery_removal` removes items for good: either the ones named in `item_uids`, or with
+`purchased_on_list_uid` every ticked-off item of one list, like Paprika's own "clear purchased" (up to 200 per
+proposal; the summary says when more remain, and the commit posts them 25 per request). Removal works like
+the pantry removal below; when clearing ticked-off items, one put back on the list as not bought, or moved to
+another list, before the commit stays and is reported in `skipped` (`duplicate` when that leaves nothing to
+remove). To record that something was bought, tick it off instead: that keeps it in the list's history.
 
 ### Editing and removing pantry items
 

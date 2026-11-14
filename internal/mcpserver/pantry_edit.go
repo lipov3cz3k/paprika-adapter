@@ -150,7 +150,7 @@ func (s *server) proposePantryEdit(ctx context.Context, in ProposePantryEditIn, 
 // of the item on that copy and reads it back.
 func (s *server) commitPantryEdit(ctx context.Context, p payload, out *CommitOut) *ToolError {
 	edit := *p.PantryEdit
-	raws, items, terr := s.pullPantry(ctx)
+	raws, items, terr := pullRows[paprika.PantryItem](ctx, s, paprika.Pantry)
 	if terr != nil {
 		return terr
 	}
@@ -166,7 +166,7 @@ func (s *server) commitPantryEdit(ctx context.Context, p payload, out *CommitOut
 		if err := s.Client.EditPantryItem(ctx, raws[edit.UID], edit.Edit); err != nil {
 			return writeFailed(err)
 		}
-		if _, items, terr = s.pullPantry(ctx); terr != nil {
+		if _, items, terr = pullRows[paprika.PantryItem](ctx, s, paprika.Pantry); terr != nil {
 			return notVerified(terr.Message)
 		}
 	}
@@ -178,23 +178,6 @@ func (s *server) commitPantryEdit(ctx context.Context, p payload, out *CommitOut
 	s.labelPantry(ctx, out.Pantry, out.PantryBefore)
 	out.Sync = s.Sync.Freshness(ctx, string(paprika.Pantry))
 	return nil
-}
-
-// pullPantry reads the pantry from Paprika: the raw rows by uid, and decoded.
-func (s *server) pullPantry(ctx context.Context) (map[string]paprika.Raw, []paprika.PantryItem, *ToolError) {
-	rows, err := s.Sync.Pull(ctx, paprika.Pantry, nil)
-	if err != nil {
-		return nil, nil, fromErr(err)
-	}
-	raws, items := make(map[string]paprika.Raw, len(rows)), make([]paprika.PantryItem, 0, len(rows))
-	for _, r := range rows {
-		item, err := paprika.Decode[paprika.PantryItem](r.JSON)
-		if err != nil {
-			return nil, nil, fromErr(err)
-		}
-		raws[r.UID], items = r, append(items, item)
-	}
-	return raws, items, nil
 }
 
 func applyPantryEdit(it paprika.PantryItem, e paprika.PantryEdit) paprika.PantryItem {

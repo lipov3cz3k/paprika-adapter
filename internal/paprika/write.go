@@ -150,10 +150,93 @@ func (c *Client) EditPantryItem(ctx context.Context, current Raw, edit PantryEdi
 	return c.upsert(ctx, Pantry, []map[string]any{obj})
 }
 
+// GroceryEdit names what to overwrite on an existing grocery item. Nil leaves a field as it is.
+type GroceryEdit struct {
+	Name        *string `json:"name,omitempty"`        // the line shown in Paprika, quantity included
+	Ingredient  *string `json:"ingredient,omitempty"`  // what to buy, without the amount
+	Quantity    *string `json:"quantity,omitempty"`    // "" clears it
+	Instruction *string `json:"instruction,omitempty"` // "" clears it
+	Aisle       *Aisle  `json:"aisle,omitempty"`
+	List        *Place  `json:"list,omitempty"` // move to another grocery list
+	Purchased   *bool   `json:"purchased,omitempty"`
+}
+
+// Aisle is a grocery aisle the way a grocery row refers to it.
+type Aisle struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
+}
+
+// Place is a grocery list and the position an item takes at its end.
+type Place struct {
+	ListUID   string `json:"list_uid"`
+	OrderFlag int    `json:"order_flag"`
+}
+
+// GroceryRowEdit is one grocery item to overwrite: the complete row as just
+// read from Paprika and the fields to change on it.
+type GroceryRowEdit struct {
+	Current Raw
+	Edit    GroceryEdit
+}
+
+// EditGroceryItems overwrites existing grocery items in one request. As with
+// EditMeal, each current row must be complete; every other field is sent back unchanged.
+func (c *Client) EditGroceryItems(ctx context.Context, edits []GroceryRowEdit) error {
+	const op = "edit grocery items"
+	if len(edits) == 0 {
+		return &Error{Kind: KindInvalid, Op: op, Message: "no items"}
+	}
+	rows := make([]map[string]any, 0, len(edits))
+	for _, e := range edits {
+		obj, err := completeRow(op, e.Current)
+		if err != nil {
+			return err
+		}
+		if e.Edit.Name != nil {
+			obj["name"] = *e.Edit.Name
+		}
+		if e.Edit.Ingredient != nil {
+			obj["ingredient"] = *e.Edit.Ingredient
+		}
+		if e.Edit.Quantity != nil {
+			obj["quantity"] = *e.Edit.Quantity
+		}
+		if e.Edit.Instruction != nil {
+			obj["instruction"] = *e.Edit.Instruction
+		}
+		if e.Edit.Aisle != nil {
+			obj["aisle"], obj["aisle_uid"] = e.Edit.Aisle.Name, e.Edit.Aisle.UID
+		}
+		if e.Edit.List != nil {
+			obj["list_uid"], obj["order_flag"] = e.Edit.List.ListUID, e.Edit.List.OrderFlag
+		}
+		if e.Edit.Purchased != nil {
+			obj["purchased"] = *e.Edit.Purchased
+		}
+		obj["deleted"] = false
+		rows = append(rows, obj)
+	}
+	return c.upsert(ctx, Groceries, rows)
+}
+
 // RemovePantryItems removes pantry items the way Paprika's own clients do: each
 // complete row is posted again, marked deleted. Paprika then stops returning it.
 func (c *Client) RemovePantryItems(ctx context.Context, current []Raw) error {
-	const op = "remove pantry items"
+	return c.remove(ctx, "remove pantry items", Pantry, current)
+}
+
+// RemoveGroceryItems removes grocery items the same way.
+func (c *Client) RemoveGroceryItems(ctx context.Context, current []Raw) error {
+	return c.remove(ctx, "remove grocery items", Groceries, current)
+}
+
+// RemoveMeals removes meal-plan entries the same way.
+func (c *Client) RemoveMeals(ctx context.Context, current []Raw) error {
+	return c.remove(ctx, "remove meals", Meals, current)
+}
+
+func (c *Client) remove(ctx context.Context, op string, col Collection, current []Raw) error {
 	if len(current) == 0 {
 		return &Error{Kind: KindInvalid, Op: op, Message: "no items"}
 	}
@@ -166,7 +249,7 @@ func (c *Client) RemovePantryItems(ctx context.Context, current []Raw) error {
 		obj["deleted"] = true
 		rows = append(rows, obj)
 	}
-	return c.upsert(ctx, Pantry, rows)
+	return c.upsert(ctx, col, rows)
 }
 
 // completeRow decodes a row read from Paprika so that it can be posted back whole.

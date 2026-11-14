@@ -80,8 +80,9 @@ func New(d Deps) *mcp.Server {
 		"served from a local cache. Every result carries a sync block: treat state=stale as possibly outdated and say so."
 	if s.writes {
 		instructions += " " + flow +
-			"Writes add rows, except the edit tools (propose_*_edit), which overwrite an existing item, propose_pantry_removal, " +
-			"which removes pantry items, and propose_recipe_trash, which moves recipes to the trash; only the tools listed by this server are available. " +
+			"Writes add rows, except the edit tools (propose_*_edit, propose_grocery_check_off), which overwrite an existing item, the " +
+			"removal tools (propose_*_removal), which remove rows, and propose_recipe_trash, which moves recipes to the trash; " +
+			"only the tools listed by this server are available. " +
 			asked
 	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: "paprika-adapter", Title: "Paprika household adapter", Version: d.Version}, &mcp.ServerOptions{
@@ -115,9 +116,22 @@ func New(d Deps) *mcp.Server {
 		add(reg, writeTool("propose_meal_plan_edit", "Propose meal plan edit",
 			"Prepare a change to ONE existing meal-plan entry: move it to another day, change its meal type, or plan a different "+
 				"recipe or text in its place. Writes nothing. Returns a proposal_id, a summary, and the entry before and after.", false, false), s.proposeMealEdit)
+		add(reg, writeTool("propose_meal_plan_removal", "Propose meal plan removal",
+			"Prepare the removal of meal-plan entries, named by uid. Writes nothing. To plan something else in an entry's place, use "+
+				"propose_meal_plan_edit instead. Returns a proposal_id, a summary and the entries that would be removed.", false, false), s.proposeMealRemoval)
 		add(reg, writeTool("propose_grocery_items", "Propose grocery items",
 			"Prepare items to add to one grocery list. Writes nothing. Items already on the list (unpurchased, same name) are skipped "+
 				"unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.", false, false), s.proposeGroceries)
+		add(reg, writeTool("propose_grocery_edit", "Propose grocery edit",
+			"Prepare a change to ONE existing grocery item: what to buy, its quantity, its note, its aisle, which list it is on, "+
+				"or whether it is bought. Writes nothing. Returns a proposal_id, a summary, and the item before and after.", false, false), s.proposeGroceryEdit)
+		add(reg, writeTool("propose_grocery_check_off", "Propose grocery check-off",
+			"Prepare ticking grocery items off as bought, named by uid, or with undo=true putting them back on the list. Writes nothing. "+
+				"Returns a proposal_id, a summary, and the items before and after.", false, false), s.proposeGroceryCheckOff)
+		add(reg, writeTool("propose_grocery_removal", "Propose grocery removal",
+			"Prepare the removal of grocery items: the ones named by uid, or every ticked-off item on one list. Writes nothing. "+
+				"To record that something was bought, use propose_grocery_check_off instead. Returns a proposal_id, a summary "+
+				"and the items that would be removed.", false, false), s.proposeGroceryRemoval)
 		add(reg, writeTool("propose_pantry_items", "Propose pantry items",
 			"Prepare items to add to the Paprika pantry, as in stock and bought today, each optionally in a location such as the Fridge "+
 				"and with a note. Writes nothing. Ingredients already in the pantry "+
@@ -144,8 +158,8 @@ func New(d Deps) *mcp.Server {
 				"them until it is emptied in an app; this adapter never deletes a recipe for good. Returns a proposal_id and a summary.", false, false), s.proposeRecipeTrash)
 		add(reg, writeTool("commit_proposal", "Commit proposal",
 			commit+"Safe to repeat: a retried commit never creates duplicates. "+
-				"Committing an edit overwrites the edited fields of that recipe, meal-plan entry or pantry item; committing a removal "+
-				"removes the named pantry items; committing a trash moves the named recipes into or out of the trash.", true, true), s.commitProposal)
+				"Committing an edit or check-off overwrites the edited fields of that recipe, meal-plan entry, grocery item or pantry item; "+
+				"committing a removal removes the named rows; committing a trash moves the named recipes into or out of the trash.", true, true), s.commitProposal)
 	}
 	return srv
 }

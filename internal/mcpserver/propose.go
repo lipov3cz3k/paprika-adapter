@@ -24,6 +24,11 @@ const (
 	kindRecipeCreate  = "recipe_create"
 	kindRecipeTrash   = "recipe_trash"
 
+	kindGroceryEdit     = "grocery_edit"
+	kindGroceryCheckOff = "grocery_check_off"
+	kindGroceryRemoval  = "grocery_removal"
+	kindMealRemoval     = "meal_plan_removal"
+
 	maxGroceryItems = 25
 	maxTextLen      = 200
 	maxPlanDistance = 366 * 24 * time.Hour
@@ -42,13 +47,18 @@ type payload struct {
 	PantryRemoval   []PantryEntry            `json:"pantry_removal,omitempty"` // as shown to the user when proposing
 	RecipeCreate    *paprika.NewRecipe       `json:"recipe_create,omitempty"`
 	RecipeTrash     *recipeTrash             `json:"recipe_trash,omitempty"`
+	GroceryEdit     *groceryEdit             `json:"grocery_edit,omitempty"`
+	GroceryCheckOff *groceryCheckOff         `json:"grocery_check_off,omitempty"`
+	GroceryRemoval  []GroceryEntry           `json:"grocery_removal,omitempty"` // as shown to the user when proposing
+	ClearPurchased  bool                     `json:"clear_purchased,omitempty"` // the removal clears what is ticked off; an item put back since stays
+	MealRemoval     []MealEntry              `json:"meal_removal,omitempty"`    // as shown to the user when proposing
 	Skipped         []SkippedItem            `json:"skipped,omitempty"`
 	AllowDuplicates bool                     `json:"allow_duplicates"`
 }
 
 type ProposalView struct {
 	ProposalID     string          `json:"proposal_id" jsonschema:"pass this to commit_proposal"`
-	Kind           string          `json:"kind" jsonschema:"meal_plan_entry, meal_plan_edit, grocery_items, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash"`
+	Kind           string          `json:"kind" jsonschema:"meal_plan_entry, meal_plan_edit, meal_plan_removal, grocery_items, grocery_edit, grocery_check_off, grocery_removal, pantry_items, pantry_edit, pantry_removal, recipe_edit, recipe_create or recipe_trash"`
 	ExpiresAt      string          `json:"expires_at" jsonschema:"RFC 3339 UTC time after which the proposal can no longer be committed"`
 	Summary        string          `json:"summary" jsonschema:"plain-language statement of exactly what commit_proposal will write"`
 	Meal           *MealEntry      `json:"meal,omitempty" jsonschema:"the meal-plan entry that would be created, or how an edited entry would look afterwards"`
@@ -58,6 +68,10 @@ type ProposalView struct {
 	Pantry         []PantryEntry   `json:"pantry_items,omitempty" jsonschema:"the pantry items that would be created, or how an edited item would look afterwards"`
 	PantryBefore   []PantryEntry   `json:"pantry_before,omitempty" jsonschema:"for an edit: the item as it is now"`
 	PantryRemoved  []PantryEntry   `json:"pantry_removed,omitempty" jsonschema:"the pantry items that would be removed"`
+	GroceryAfter   []GroceryEntry  `json:"grocery_after,omitempty" jsonschema:"for a grocery edit or check-off: how the items would look afterwards"`
+	GroceryBefore  []GroceryEntry  `json:"grocery_before,omitempty" jsonschema:"for a grocery edit or check-off: the items as they are now"`
+	GroceryGone    []GroceryEntry  `json:"grocery_removed,omitempty" jsonschema:"the grocery items that would be removed"`
+	MealsRemoved   []MealEntry     `json:"meals_removed,omitempty" jsonschema:"the meal-plan entries that would be removed"`
 	Recipe         *RecipeEditView `json:"recipe_edit,omitempty" jsonschema:"the recipe that would be changed, with the old and new value of every field"`
 	RecipeNew      *RecipeEditView `json:"recipe_new,omitempty" jsonschema:"the recipe that would be created, with every field it is given"`
 	RecipesTrashed []NamedRef      `json:"recipes_trashed,omitempty" jsonschema:"the recipes that would be moved into, or out of, the trash"`
@@ -201,12 +215,7 @@ func (s *server) proposeGroceries(ctx context.Context, in ProposeGroceriesIn, ou
 	if err != nil {
 		return fromErr(err)
 	}
-	order := 0
-	for _, e := range existing {
-		if e.ListUID == list.UID && e.OrderFlag >= order {
-			order = e.OrderFlag + 1
-		}
-	}
+	order := nextGroceryOrder(existing, list.UID)
 	p := payload{List: list, AllowDuplicates: in.AllowDuplicates}
 	var shown []ProposedItem
 	var lines []string
@@ -352,16 +361,20 @@ func duplicateMeal(existing []paprika.Meal, m paprika.NewMeal) *paprika.Meal {
 }
 
 func duplicateGrocery(existing []paprika.GroceryItem, it paprika.NewGroceryItem) *paprika.GroceryItem {
-	want := norm(it.Ingredient)
 	for i, e := range existing {
-		if e.ListUID != it.ListUID || e.Purchased || e.UID == it.UID {
-			continue
-		}
-		if norm(e.Ingredient) == want || norm(e.Name) == want || norm(e.Name) == norm(it.Name) {
+		if e.ListUID == it.ListUID && !e.Purchased && e.UID != it.UID && sameGrocery(e, it) {
 			return &existing[i]
 		}
 	}
 	return nil
+}
+
+// sameGrocery tells whether e is the thing it names, by ingredient or by line.
+// An empty ingredient or line names nothing: items Paprika left without an
+// ingredient are not all the same item.
+func sameGrocery(e paprika.GroceryItem, it paprika.NewGroceryItem) bool {
+	want, line := norm(it.Ingredient), norm(it.Name)
+	return want != "" && (norm(e.Ingredient) == want || norm(e.Name) == want) || line != "" && norm(e.Name) == line
 }
 
 // aisleIndex suggests the aisle Paprika already remembers for an ingredient.
