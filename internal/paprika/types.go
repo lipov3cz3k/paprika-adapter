@@ -184,7 +184,7 @@ var knownFields = map[string][]string{
 		"difficulty", "prep_time", "cook_time", "total_time", "source", "source_url", "image_url", "photo",
 		"photo_hash", "photo_large", "scale", "hash", "categories", "rating", "in_trash", "is_pinned",
 		"on_favorites", "on_grocery_list", "created", "photo_url",
-		// Seen on a real account on 2026-10-09, null on every recipe there, so their value types are unknown.
+		// Seen on a real account on 2026-10-09, null on every recipe there. For their types see docs/PROTOCOL.md.
 		"prep_minutes", "cook_minutes", "total_minutes", "servings_min", "servings_max", "nutrition",
 		"cookbook_uid", "metadata_version",
 	},
