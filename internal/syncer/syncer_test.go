@@ -68,7 +68,7 @@ func TestFirstSyncFillsEveryCollection(t *testing.T) {
 	h := newHarness(t, paprikatest.Password)
 	report := h.refresh(t)
 	want := map[string]int{"recipes": 6, "categories": 5, "pantry": 8, "meals": 5, "mealtypes": 4,
-		"grocerylists": 2, "groceries": 5, "groceryaisles": 6, "groceryingredients": 5, "photos": 2}
+		"grocerylists": 2, "groceries": 5, "groceryaisles": 6, "groceryingredients": 5, "photos": 2, "pantrylocations": 3}
 	for col, rows := range want {
 		f := report[col]
 		if f.State != syncer.StateFresh || f.Rows != rows || f.Error != nil || f.Drift != nil {

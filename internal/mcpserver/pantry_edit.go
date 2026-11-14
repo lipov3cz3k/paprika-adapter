@@ -18,6 +18,8 @@ type ProposePantryEditIn struct {
 	ExpirationDate  string  `json:"expiration_date,omitempty" jsonschema:"set the expiration date, YYYY-MM-DD; not together with clear_expiration"`
 	ClearExpiration bool    `json:"clear_expiration,omitempty" jsonschema:"remove the expiration date"`
 	PurchaseDate    string  `json:"purchase_date,omitempty" jsonschema:"set the purchase date, YYYY-MM-DD"`
+	Location        string  `json:"location,omitempty" jsonschema:"move the item to this pantry location, by name, e.g. Freezer; it must already exist in Paprika"`
+	Notes           *string `json:"notes,omitempty" jsonschema:"new free-text note; an empty string removes it"`
 	AllowDuplicate  bool    `json:"allow_duplicate,omitempty" jsonschema:"allow renaming to an ingredient another pantry item already has; default false"`
 }
 
@@ -79,11 +81,34 @@ func (s *server) proposePantryEdit(ctx context.Context, in ProposePantryEditIn, 
 		edit.Edit.PurchaseDate = &stamp
 		parts = append(parts, "set the purchase date to "+bought)
 	}
-	if len(parts) == 0 {
-		return invalid("give at least one of ingredient, quantity, in_stock, expiration_date, clear_expiration, purchase_date")
+	if in.Notes != nil {
+		notes := strings.TrimSpace(*in.Notes)
+		if terr := checkText("notes", notes); terr != nil {
+			return terr
+		}
+		edit.Edit.Notes = &notes
+		parts = append(parts, fmt.Sprintf("set the notes to %q", notes))
+		if notes == "" {
+			parts[len(parts)-1] = "remove the notes"
+		}
 	}
-	if terr := s.ensureFresh(ctx, &out.Meta, string(paprika.Pantry)); terr != nil {
+	if len(parts) == 0 && strings.TrimSpace(in.Location) == "" {
+		return invalid("give at least one of ingredient, quantity, in_stock, expiration_date, clear_expiration, purchase_date, location, notes")
+	}
+	if terr := s.ensureFresh(ctx, &out.Meta, string(paprika.Pantry), string(paprika.PantryLocations)); terr != nil {
 		return terr
+	}
+	places, err := s.pantryPlaces(ctx)
+	if err != nil {
+		return fromErr(err)
+	}
+	if strings.TrimSpace(in.Location) != "" {
+		l, terr := places.resolve("location", in.Location)
+		if terr != nil {
+			return terr
+		}
+		edit.Edit.LocationUID = &l.UID
+		parts = append(parts, "move it to "+l.Name)
 	}
 	existing, err := store.Load[paprika.PantryItem](ctx, s.Store, paprika.Pantry)
 	if err != nil {
@@ -95,7 +120,12 @@ func (s *server) proposePantryEdit(ctx context.Context, in ProposePantryEditIn, 
 	}
 	after := applyPantryEdit(current, edit.Edit)
 	before, result := pantryEntry(current), pantryEntry(after)
-	if result == before {
+	if before.LocationUID != result.LocationUID && places.name(before.LocationUID) == places.name(result.LocationUID) {
+		result.LocationUID = before.LocationUID // already there: the default location, stored as no uid
+		edit.Edit.LocationUID = nil
+		parts = parts[:len(parts)-1]
+	}
+	if result == before || len(parts) == 0 {
 		return &ToolError{Code: "duplicate", Message: "nothing to change: the item already is as requested"}
 	}
 	if dup := renamedOnto(existing, current, after); dup != nil && !in.AllowDuplicate {
@@ -110,6 +140,8 @@ func (s *server) proposePantryEdit(ctx context.Context, in ProposePantryEditIn, 
 		return terr
 	}
 	view.Pantry, view.PantryBefore = []PantryEntry{result}, []PantryEntry{before}
+	places.label(view.Pantry)
+	places.label(view.PantryBefore)
 	out.Proposal = view
 	return nil
 }
@@ -143,6 +175,7 @@ func (s *server) commitPantryEdit(ctx context.Context, p payload, out *CommitOut
 		return notVerified("Paprika accepted the item but still returns it unchanged")
 	}
 	out.Pantry, out.PantryBefore = []PantryEntry{pantryEntry(got)}, []PantryEntry{edit.Before}
+	s.labelPantry(ctx, out.Pantry, out.PantryBefore)
 	out.Sync = s.Sync.Freshness(ctx, string(paprika.Pantry))
 	return nil
 }
@@ -179,6 +212,15 @@ func applyPantryEdit(it paprika.PantryItem, e paprika.PantryEdit) paprika.Pantry
 	}
 	if e.PurchaseDate != nil {
 		it.PurchaseDate = e.PurchaseDate
+	}
+	if e.LocationUID != nil {
+		it.LocationUID = e.LocationUID
+	}
+	if e.Notes != nil {
+		it.Notes = nil
+		if *e.Notes != "" {
+			it.Notes = e.Notes
+		}
 	}
 	return it
 }

@@ -10,12 +10,13 @@ import (
 // through verbatim and never reinterpreted.
 const TimeLayout = "2006-01-02 15:04:05"
 
-// Collection is a v2 sync collection that is read with a single GET returning every row.
+// Collection is a sync collection that is read with a single GET returning every row.
 type Collection string
 
 const (
 	Categories         Collection = "categories"
 	Pantry             Collection = "pantry"
+	PantryLocations    Collection = "pantrylocations" // Paprika 4; v3 only
 	Meals              Collection = "meals"
 	MealTypes          Collection = "mealtypes"
 	GroceryLists       Collection = "grocerylists"
@@ -30,7 +31,7 @@ const Recipes = "recipes"
 
 // Collections lists every replace-all collection the adapter reads, in sync order.
 var Collections = []Collection{
-	Categories, MealTypes, GroceryAisles, GroceryIngredients, GroceryLists, Groceries, Pantry, Meals, Photos,
+	Categories, MealTypes, GroceryAisles, GroceryIngredients, GroceryLists, Groceries, PantryLocations, Pantry, Meals, Photos,
 }
 
 // Raw is one entity exactly as Paprika returned it. The JSON is stored verbatim so
@@ -100,6 +101,16 @@ type PantryItem struct {
 	HasExpiration  bool    `json:"has_expiration"`
 	ExpirationDate *string `json:"expiration_date"`
 	PurchaseDate   *string `json:"purchase_date"`
+	LocationUID    *string `json:"location_uid"` // Paprika 4; nil puts the item in the default location
+	Notes          *string `json:"notes"`        // Paprika 4
+}
+
+// PantryLocation is a place the pantry is split into, such as the fridge (Paprika 4).
+type PantryLocation struct {
+	UID       string `json:"uid"`
+	Name      string `json:"name"`
+	OrderFlag int    `json:"order_flag"`
+	IsDefault bool   `json:"is_default"`
 }
 
 type Meal struct {
@@ -194,8 +205,9 @@ var knownFields = map[string][]string{
 		"uid", "ingredient", "aisle", "expiration_date", "has_expiration", "in_stock", "purchase_date",
 		"quantity", "aisle_uid", "location_uid", "notes",
 	},
-	string(Meals):     {"uid", "recipe_uid", "name", "date", "type", "type_uid", "order_flag", "is_ingredient", "scale"},
-	string(MealTypes): {"uid", "name", "color", "order_flag", "original_type", "export_all_day", "export_time"},
+	string(PantryLocations): {"uid", "name", "order_flag", "is_default"},
+	string(Meals):           {"uid", "recipe_uid", "name", "date", "type", "type_uid", "order_flag", "is_ingredient", "scale"},
+	string(MealTypes):       {"uid", "name", "color", "order_flag", "original_type", "export_all_day", "export_time"},
 	string(GroceryLists): {
 		"uid", "name", "order_flag", "is_default", "reminders_list",
 	},

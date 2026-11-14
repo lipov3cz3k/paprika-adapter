@@ -142,6 +142,7 @@ type reply struct {
 	Today         string
 	Meals         []mcpserver.MealEntry
 	MealTypes     []mcpserver.NamedRef `json:"meal_types"`
+	Locations     []mcpserver.NamedRef
 	Meal          *mcpserver.MealEntry
 
 	Healthy       bool
@@ -161,6 +162,8 @@ type reply struct {
 // item covers pantry and grocery rows.
 type item struct {
 	UID, Name, Ingredient, Quantity, Aisle string
+	Location, Notes                        string
+	LocationUID                            string `json:"location_uid"`
 	InStock                                bool   `json:"in_stock"`
 	ExpirationDate                         string `json:"expiration_date"`
 	Purchased                              bool

@@ -406,8 +406,13 @@ What this means for the adapter:
 - `pantrylocations` (and `cookbooks`, `recipesearches`) can only be read from v3, and v3 is the only sync version
   the Paprika 4 apps know, so the adapter moved to v3 as a whole (`paprika.SyncPath`). `verify` against v3 passed on 2026-11-12
   with the same rows and no drift.
-- Writes on v3 were checked with the integration tests on 2026-11-14, see above. Whether a pantry row posted
-  with a non-null `location_uid` keeps it has not been tried.
+- Writes on v3 were checked with the integration tests on 2026-11-14, see above. Pantry locations were checked
+  on 2026-11-12 (A, `TestLivePantryLocation` against `/api/v3/`): a pantry item posted with `location_uid` and
+  `notes` keeps both; posting the whole row again with another `location_uid` and `notes: null` moves it and
+  removes the note; `deleted: true` removes it.
+- Paprika can be slow: on 2026-11-12 one full read took 33 s and one write timed out after the client's 30 s,
+  while the same write took under 2 s a minute later. A timed-out write may still land; the adapter's commits
+  read back before reporting, and the integration tests' cleanup has to be checked by hand when it times out.
 - Edits and removals post back the whole row as read, so they keep `location_uid`, `notes` and `cookbook_uid`.
   A new pantry item is sent with `location_uid: null`, so it has no location and the apps show it under the
   default one (P).
