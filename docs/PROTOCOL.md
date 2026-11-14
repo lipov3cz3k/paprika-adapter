@@ -55,8 +55,8 @@ for reads both answer identically (A), and the writes were checked on v3 on
 | 18 | Edit a pantry item | `POST /sync/pantry/` with the whole existing row under its uid, changed fields overwritten | C (whole-object upsert) | **A** 2026-10-10 |
 | 19 | Remove pantry items | `POST /sync/pantry/` with each whole existing row and `deleted: true` | C (soft delete) | **A** 2026-10-10 |
 | 20 | Tell the other devices | `POST /sync/notify/` without a body, after a commit was written and read back. Paprika then sends the account's other devices an `update` event and they sync at once | P | **A** 2026-11-14: `{"result": true}`, and a recipe edit followed by the ping showed up at once in the open macOS and Android apps. A failure is logged and does not fail the commit |
-| 21 | Create a recipe | as 16, to the new uid: the 27 fields of a Paprika 3 save plus `cookbook_uid: null` (the default cookbook), text fields given or `""`, `photo`/`image_url`/`scale` null, `categories` uids, no `metadata_version`, so the apps derive the `*_minutes` and `servings_*` numbers (P) | C, P | **A** 2026-11-12 on v2 without `cookbook_uid`; on v3 not verified |
-| 22 | Move a recipe to the trash, or out | as 16, with `in_trash` set and a new hash | C | **A** 2026-11-12 on v2, both ways; on v3 not verified |
+| 21 | Create a recipe | as 16, to the new uid: the 27 fields of a Paprika 3 save plus `cookbook_uid: null` (the default cookbook), text fields given or `""`, `photo`/`image_url`/`scale` null, `categories` uids, no `metadata_version`, so the apps derive the `*_minutes` and `servings_*` numbers (P) | C, P | **A** 2026-11-12 on v2 without `cookbook_uid`, 2026-11-14 on v3 with it |
+| 22 | Move a recipe to the trash, or out | as 16, with `in_trash` set and a new hash | C | **A** 2026-11-12 on v2 and 2026-11-14 on v3, both ways |
 
 Both `www.paprikaapp.com` and `paprikaapp.com` answered identically (L). The adapter uses `www`.
 
@@ -393,6 +393,9 @@ The integration tests against `/api/v3/sync/`, with the rows in the shape the Pa
 | `TestLiveGroceryWrite` | passed against a list whose name contains `test`: the item was stored with `aisle: ""`, `aisle_uid: null` as sent, and gone after the soft delete |
 | `TestLiveRecipeEdit` | passed against a recipe whose name contains `test`: rating, notes, description and directions were overwritten by posting the whole recipe with a new 16-digit `hash`; Paprika returned the new values and the new hash, every other field as before, and the test then put the old values back the same way |
 | Recipe created in Paprika 4.0.22 | its uid is a version 7 UUID and its `hash` 16 hex digits, as the apps were expected to mint them (P) |
+| `TestLiveRecipeEdit`, every field `propose_recipe_edit` writes | passed against a recipe named `Test recept`: every text field, the rating and the categories overwritten and read back, then put back. The `*_minutes` and `servings_*` numbers were `null` after the restore, since the adapter clears them when their text changes; the app showed the recipe as before |
+| `TestLiveRecipeCreate` | passed: a recipe posted with `cookbook_uid: null` and no `metadata_version` was read back and listed with the posted hash, then moved to the trash with a new hash. The run took 32 s. The app showed it in the trash; taken out there by hand, its text, times and servings were as written |
+| Trash and restore of a recipe the apps had | `Test recept 2` posted with `in_trash: true` and a new hash, then `notify`: the app showed it in the trash. Posted again with `in_trash: false` and another new hash: the app showed it in the recipe list again |
 
 Each integration test logs in again. After about fifteen logins within an hour Paprika answered the next one
 with HTTP 200 and `{"error":{"message":"Too many attempts. Please wait a few minutes and try again."}}`.
@@ -479,13 +482,13 @@ What this means for the adapter:
   fields of a Paprika 3 save to a fresh uid created the recipe; Paprika returned it with the Paprika 4 fields
   (`prep_minutes`, `metadata_version`, `nutrition`, …) added as null, listed it with the posted hash, and the
   app showed it with its text, times and servings. Since the move to v3 the adapter also sends
-  `cookbook_uid: null`, as the Paprika 4 apps do for the default cookbook; that has not been run on a real
-  account yet.
+  `cookbook_uid: null`, as the Paprika 4 apps do for the default cookbook; checked on v3 on
+  [2026-11-14](#2026-11-14-writes-on-v3-paprika-4022-in-use).
 - **Trashing needs a new hash** (A, 2026-11-12). A recipe the app already had, written with `in_trash: true`
   but its hash unchanged, was trashed on the server (Paprika returned `in_trash: true`) but stayed outside the
   trash in the app: the apps notice a change only by the hash. Written again with a different hash, it moved to
   the trash in the app. Every write now stamps a new random hash, so moving a recipe into or out of the trash
-  always changes it.
+  always changes it; on v3 on 2026-11-14 both moves of a recipe the apps had showed in the app.
 - **What the app does when it trashes** (A, 2026-11-12, Paprika 4.0). A recipe the adapter had created,
   deleted in the app, came back from Paprika with `in_trash: true`, a new 16-digit hash, and converted to the
   Paprika 4 shape: `metadata_version: 2` and `prep_minutes` 1 parsed from the text "1 min". The adapter then
