@@ -65,6 +65,7 @@ type Server struct {
 	rows         map[string][]row
 	counters     map[string]int64
 	requests     []string
+	posted       map[string][]row // rows of collection writes exactly as the client sent them
 	failures     map[string][]int // "METHOD path" -> queued HTTP statuses
 	dropAck      int              // writes to apply and then answer with 502
 	down         bool             // answer everything with 503
@@ -76,7 +77,7 @@ type Server struct {
 // New starts a fake seeded with the fixtures. Meal dates are laid out around the
 // week (Monday to Sunday) containing now.
 func New(now time.Time) *Server {
-	s := &Server{rows: map[string][]row{}, counters: map[string]int64{}, failures: map[string][]int{}}
+	s := &Server{rows: map[string][]row{}, counters: map[string]int64{}, failures: map[string][]int{}, posted: map[string][]row{}}
 	monday := now.AddDate(0, 0, -((int(now.Weekday()) + 6) % 7))
 	s.recipes = load("recipes", monday)
 	for _, c := range collections {
@@ -262,6 +263,14 @@ func (s *Server) Rows(collection string) []row {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return live(s.rows[collection])
+}
+
+// Posted returns every row written to a collection so far, exactly as the client
+// sent it: with "deleted" and without the fields the fake fills in on read.
+func (s *Server) Posted(collection string) []row {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]row(nil), s.posted[collection]...)
 }
 
 // UpdateRecipe changes one recipe field and gives the recipe a new hash, as an
@@ -518,6 +527,11 @@ func (s *Server) write(w http.ResponseWriter, r *http.Request, collection string
 		}
 	}
 	for _, it := range items {
+		sent := row{}
+		for k, v := range it {
+			sent[k] = v
+		}
+		s.posted[collection] = append(s.posted[collection], sent)
 		s.upsert(collection, withReadDefaults(collection, it))
 	}
 	if s.dropAck > 0 {
@@ -537,8 +551,8 @@ func (s *Server) known(collection, uid string) bool {
 	return false
 }
 
-// withReadDefaults adds the fields Paprika returns on read even though its own
-// clients omit them on write.
+// withReadDefaults adds the fields Paprika returns on read even when a client
+// left them out of the write, as the Paprika 3 apps did.
 func withReadDefaults(collection string, r row) row {
 	defaults := map[string]row{
 		"meals":     {"is_ingredient": false, "scale": nil},

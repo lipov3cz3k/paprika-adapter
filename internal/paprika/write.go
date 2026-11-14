@@ -19,8 +19,8 @@ var uidPattern = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-
 // NewUID mints a uid in the format Paprika's own clients use.
 func NewUID() string { return strings.ToUpper(uuid.NewString()) }
 
-// NewMeal is one meal-plan entry to create. The wire shape mirrors what the
-// Paprika 3 macOS client posts.
+// NewMeal is one meal-plan entry to create. Together with mealWire it has the
+// keys the Paprika 4 apps post.
 type NewMeal struct {
 	UID       string  `json:"uid"`
 	RecipeUID *string `json:"recipe_uid"` // nil for a free-text entry
@@ -44,8 +44,8 @@ type NewGroceryItem struct {
 	OrderFlag   int     `json:"order_flag"`
 }
 
-// NewPantryItem is one pantry item to create. Like the macOS client, the write
-// carries no notes field.
+// NewPantryItem is one pantry item to create. Together with pantryWire it has
+// the keys the Paprika 4 apps post.
 type NewPantryItem struct {
 	UID            string  `json:"uid"`
 	Ingredient     string  `json:"ingredient"`
@@ -166,7 +166,9 @@ func completeRow(op string, current Raw) (map[string]any, error) {
 
 type mealWire struct {
 	NewMeal
-	Deleted bool `json:"deleted"`
+	IsIngredient bool    `json:"is_ingredient"`
+	Scale        *string `json:"scale"`
+	Deleted      bool    `json:"deleted"`
 }
 
 type groceryWire struct {
@@ -202,9 +204,13 @@ func (c *Client) AddGroceryItems(ctx context.Context, items []NewGroceryItem) er
 	return c.upsert(ctx, Groceries, wire)
 }
 
+// A new item is sent without a location: the apps then show it in the default
+// one. A location uid they do not know would make them delete the item.
 type pantryWire struct {
 	NewPantryItem
-	Deleted bool `json:"deleted"`
+	Notes       *string `json:"notes"`
+	LocationUID *string `json:"location_uid"`
+	Deleted     bool    `json:"deleted"`
 }
 
 // AddPantryItems creates pantry items in one request. The same uid caveat as

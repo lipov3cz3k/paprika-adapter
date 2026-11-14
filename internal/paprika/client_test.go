@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -198,6 +199,44 @@ func TestWriteUsesGzippedMultipartArray(t *testing.T) {
 		return
 	}
 	t.Fatal("item not stored by the server")
+}
+
+// The key sets are the ones the Paprika 4 apps post, see docs/PROTOCOL.md.
+func TestNewRowsCarryTheKeysPaprika4Sends(t *testing.T) {
+	fake := newFake(t)
+	c := newClient(t, fake)
+	ctx := context.Background()
+	if err := c.AddMeal(ctx, paprika.NewMeal{UID: paprika.NewUID(), Name: "Takeaway", Date: "2026-10-08 00:00:00"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.AddPantryItems(ctx, []paprika.NewPantryItem{{UID: paprika.NewUID(), Ingredient: "rice", InStock: true}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.AddGroceryItems(ctx, []paprika.NewGroceryItem{{UID: paprika.NewUID(), ListUID: "L", Name: "x"}}); err != nil {
+		t.Fatal(err)
+	}
+	for collection, want := range map[string]string{
+		"meals":     "date deleted is_ingredient name order_flag recipe_uid scale type type_uid uid",
+		"pantry":    "aisle aisle_uid deleted expiration_date has_expiration in_stock ingredient location_uid notes purchase_date quantity uid",
+		"groceries": "aisle aisle_uid deleted ingredient instruction list_uid name order_flag purchased quantity recipe separate uid",
+	} {
+		sent := fake.Posted(collection)
+		if len(sent) != 1 {
+			t.Fatalf("%s: %d rows posted, want 1", collection, len(sent))
+		}
+		keys := make([]string, 0, len(sent[0]))
+		for k := range sent[0] {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		if got := strings.Join(keys, " "); got != want {
+			t.Errorf("%s keys:\n got %s\nwant %s", collection, got, want)
+		}
+	}
+	meal, pantry := fake.Posted("meals")[0], fake.Posted("pantry")[0]
+	if meal["is_ingredient"] != false || meal["scale"] != nil || pantry["notes"] != nil || pantry["location_uid"] != nil {
+		t.Errorf("defaults: meal=%v pantry=%v", meal, pantry)
+	}
 }
 
 func TestMalformedUIDIsRefusedLocally(t *testing.T) {
