@@ -58,17 +58,19 @@ type Server struct {
 
 	listener *httptest.Server
 
-	mu       sync.Mutex
-	tokenSeq int
-	token    string
-	recipes  []row
-	rows     map[string][]row
-	counters map[string]int64
-	requests []string
-	failures map[string][]int // "METHOD path" -> queued HTTP statuses
-	dropAck  int              // writes to apply and then answer with 502
-	down     bool             // answer everything with 503
-	epoch    int              // photo links issued under an older epoch have expired
+	mu           sync.Mutex
+	tokenSeq     int
+	token        string
+	recipes      []row
+	rows         map[string][]row
+	counters     map[string]int64
+	requests     []string
+	failures     map[string][]int // "METHOD path" -> queued HTTP statuses
+	dropAck      int              // writes to apply and then answer with 502
+	down         bool             // answer everything with 503
+	lapsed       bool             // the account's plan lapsed: reads work, writes are refused
+	lapsedStatus int              // HTTP status of that refusal
+	epoch        int              // photo links issued under an older epoch have expired
 }
 
 // New starts a fake seeded with the fixtures. Meal dates are laid out around the
@@ -233,6 +235,21 @@ func (s *Server) SetDown(down bool) {
 	s.down = down
 }
 
+// SetPlanLapsed makes every write fail the way Paprika refuses an account whose
+// plan no longer includes sync: HTTP 200 with error code 4001. Reads keep working.
+func (s *Server) SetPlanLapsed(lapsed bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.lapsed, s.lapsedStatus = lapsed, http.StatusOK
+}
+
+// SetPlanLapsedWithStatus is SetPlanLapsed with the refusal sent under the given HTTP status.
+func (s *Server) SetPlanLapsedWithStatus(status int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.lapsed, s.lapsedStatus = true, status
+}
+
 // RevokeToken invalidates the token every client currently holds.
 func (s *Server) RevokeToken() {
 	s.mu.Lock()
@@ -344,6 +361,12 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := strings.TrimSuffix(rest, "/")
+	if s.lapsed && r.Method == http.MethodPost {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(s.lapsedStatus)
+		_ = json.NewEncoder(w).Encode(row{"error": row{"code": 4001, "message": "Sync is not available for this account."}})
+		return
+	}
 	switch {
 	case r.Method == http.MethodGet && name == "status":
 		result(w, s.counters)

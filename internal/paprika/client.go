@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -201,8 +203,27 @@ type body struct {
 type envelope struct {
 	Result json.RawMessage `json:"result"`
 	Error  *struct {
-		Message string `json:"message"`
+		Code    errCode `json:"code"`
+		Message string  `json:"message"`
 	} `json:"error"`
+}
+
+// errCode is Paprika's numeric error code. A code of any other shape reads as 0,
+// so that it cannot make the whole error body unreadable and hide its message.
+type errCode int
+
+func (c *errCode) UnmarshalJSON(b []byte) error {
+	var f float64
+	if json.Unmarshal(b, &f) != nil {
+		var s string
+		_ = json.Unmarshal(b, &s)
+		f, _ = strconv.ParseFloat(s, 64)
+	}
+	if f != math.Trunc(f) || math.Abs(f) > math.MaxInt32 {
+		f = 0 // not a code Paprika uses; also catches NaN and infinities
+	}
+	*c = errCode(f)
+	return nil
 }
 
 // call performs one authenticated API call and returns the envelope's result.
@@ -232,14 +253,14 @@ func (c *Client) call(ctx context.Context, method, path string, b *body) (json.R
 		}
 		last = err
 		pe := err.(*Error)
-		if pe.Status == http.StatusUnauthorized && !relogged {
+		if pe.Kind == KindAuth && pe.Status == http.StatusUnauthorized && !relogged {
 			relogged = true
 			c.dropToken(token)
 			attempt-- // the re-login does not consume a retry
 			continue
 		}
-		if pe.Status == http.StatusUnauthorized {
-			pe.Kind, pe.Message = KindAuth, "token refused again right after a successful login"
+		if pe.Kind == KindAuth && pe.Status == http.StatusUnauthorized {
+			pe.Message = "token refused again right after a successful login"
 			return nil, pe
 		}
 		if !pe.Retryable() {
@@ -282,30 +303,38 @@ func (c *Client) send(ctx context.Context, method, path string, b *body, token s
 
 	var env envelope
 	parsed := json.Unmarshal(raw, &env) == nil
-	msg := http.StatusText(resp.StatusCode)
-	if parsed && env.Error != nil && env.Error.Message != "" {
-		msg = env.Error.Message
+	msg, code := http.StatusText(resp.StatusCode), 0
+	if parsed && env.Error != nil {
+		code = int(env.Error.Code)
+		if env.Error.Message != "" {
+			msg = env.Error.Message
+		}
+	}
+	fail := func(kind Kind, message string) (json.RawMessage, error) {
+		return nil, &Error{Kind: kind, Op: op, Status: resp.StatusCode, Code: code, Message: message}
 	}
 	switch {
+	case code == codeSyncNotAllowed, code == codePremiumRequired:
+		// Not a credentials problem, whatever status it comes with: logging in again changes nothing.
+		return fail(KindPlan, msg)
 	case resp.StatusCode == http.StatusUnauthorized, resp.StatusCode == http.StatusForbidden:
-		return nil, &Error{Kind: KindAuth, Op: op, Status: resp.StatusCode, Message: msg}
+		return fail(KindAuth, msg)
 	case resp.StatusCode == http.StatusNotFound:
-		return nil, &Error{Kind: KindNotFound, Op: op, Status: resp.StatusCode, Message: msg}
+		return fail(KindNotFound, msg)
 	case resp.StatusCode == http.StatusTooManyRequests, resp.StatusCode >= 500:
-		return nil, &Error{Kind: KindUnavailable, Op: op, Status: resp.StatusCode, Message: msg}
+		return fail(KindUnavailable, msg)
 	case resp.StatusCode < 200 || resp.StatusCode > 299:
-		return nil, &Error{Kind: KindRejected, Op: op, Status: resp.StatusCode, Message: msg}
+		return fail(KindRejected, msg)
 	case !parsed:
-		return nil, &Error{Kind: KindProtocol, Op: op, Status: resp.StatusCode, Message: "response is not JSON"}
+		return fail(KindProtocol, "response is not JSON")
 	case env.Error != nil:
 		// Paprika reports many application errors as HTTP 200 with an error body.
-		kind := KindRejected
-		if strings.Contains(strings.ToLower(msg), "not found") {
-			kind = KindNotFound
+		if code == codeRecipeNotFound || code == codeCookbookMissing || strings.Contains(strings.ToLower(msg), "not found") {
+			return fail(KindNotFound, msg)
 		}
-		return nil, &Error{Kind: kind, Op: op, Status: resp.StatusCode, Message: msg}
+		return fail(KindRejected, msg)
 	case env.Result == nil:
-		return nil, &Error{Kind: KindProtocol, Op: op, Status: resp.StatusCode, Message: "response has neither result nor error"}
+		return fail(KindProtocol, "response has neither result nor error")
 	}
 	return env.Result, nil
 }

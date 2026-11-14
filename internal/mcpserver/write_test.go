@@ -358,3 +358,17 @@ func TestFailedPingDoesNotFailTheCommit(t *testing.T) {
 		t.Fatalf("commit = %+v notify posts=%d", c, h.posts("notify"))
 	}
 }
+
+func TestLapsedPlanIsReportedAsSuchAndNothingIsWritten(t *testing.T) {
+	h := newHarness(t, true)
+	p := groceryProposal(h, "oat milk").Proposal
+	h.fake.SetPlanLapsed(true)
+	r := h.fails("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}, "plan_required")
+	if r.Error.Retryable || !strings.HasPrefix(r.Error.Message, "nothing was written") || h.serverRows("groceries", "ingredient", "oat milk") != 0 || h.posts("notify") != 0 {
+		t.Fatalf("error = %+v", r.Error)
+	}
+	h.fake.SetPlanLapsed(false)
+	if c := h.ok("commit_proposal", map[string]any{"proposal_id": p.ProposalID, "confirm": true}); !c.Verified {
+		t.Fatalf("commit after renewal = %+v", c)
+	}
+}

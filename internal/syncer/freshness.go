@@ -26,7 +26,7 @@ type Freshness struct {
 
 // SyncError is the recorded reason a sync attempt failed.
 type SyncError struct {
-	Code    string `json:"code" jsonschema:"auth_failed, upstream_unavailable, protocol_changed, rejected, not_found or cache_error"`
+	Code    string `json:"code" jsonschema:"auth_failed, plan_required, upstream_unavailable, protocol_changed, rejected, not_found or cache_error"`
 	Message string `json:"message"`
 	At      string `json:"at" jsonschema:"RFC 3339 UTC time of the failed attempt"`
 }

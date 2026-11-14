@@ -15,6 +15,15 @@ const (
 	KindProtocol    Kind = "protocol_changed" // response did not have the shape this client was built against
 	KindRejected    Kind = "rejected"         // server understood the request and refused it
 	KindInvalid     Kind = "invalid_input"    // refused locally, nothing was sent
+	KindPlan        Kind = "plan_required"    // the account's Paprika plan does not allow the request
+)
+
+// Error codes Paprika puts in its error body, as the Paprika 4 apps know them.
+const (
+	codePremiumRequired = 4000
+	codeSyncNotAllowed  = 4001 // the plan lapsed: reading still works, writing does not
+	codeRecipeNotFound  = 6000
+	codeCookbookMissing = 6001
 )
 
 // Error is the only error type the client returns. It never carries request
@@ -23,6 +32,7 @@ type Error struct {
 	Kind    Kind
 	Op      string // e.g. "GET /api/v3/sync/meals/"
 	Status  int    // HTTP status, 0 if the request never completed
+	Code    int    // Paprika's own error code from the response body, 0 if it sent none
 	Message string
 	Err     error
 }

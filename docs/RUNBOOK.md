@@ -48,6 +48,13 @@ Notes:
 - Password changed in the Paprika app: update `paprika.env`; nothing else stores it.
 - Check the credentials independently by signing in to Paprika's cloud sync in the app itself.
 
+## Plan refusal
+
+Symptom: a write fails with `error.code: plan_required` while reads keep working. Paprika 4 ties cloud sync to
+the account's plan; when a subscription lapses, Paprika still lets a client download but refuses what it tries to
+change. The Paprika apps show "Sync is paused" in the same situation. Nothing is wrong with the adapter or its
+login: renew the plan in a Paprika app (or have the owner of the family plan do it), then commit again.
+
 ## Sync conflicts
 
 Paprika is the source of truth. The adapter never pushes cached rows, never updates and never deletes, so

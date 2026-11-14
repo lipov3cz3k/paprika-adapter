@@ -43,6 +43,7 @@ Conventions: uids are Paprika's own and stable. Adapter timestamps are RFC 3339 
 | `auth_failed` | Paprika rejected the credentials | no, see runbook |
 | `upstream_unavailable` | network error, timeout, 429 or 5xx; or the first sync has not finished (it continues in the background and on each call) | yes |
 | `protocol_changed` | Paprika's response no longer has the expected shape | no, see runbook |
+| `plan_required` | Paprika refused the request because of the account's plan, typically a write after the subscription lapsed (reads keep working) | no, see runbook |
 | `rejected` | Paprika refused the request | no |
 | `duplicate` | the write would duplicate something already in Paprika | no |
 | `confirmation_required` | `commit_proposal` called without `confirm: true` | after approval |

@@ -162,7 +162,7 @@ func (m *Meta) meta() *Meta { return m }
 
 // ToolError is a failure the agent can act on.
 type ToolError struct {
-	Code      string `json:"code" jsonschema:"stable machine-readable code, e.g. invalid_input, not_found, auth_failed, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict"`
+	Code      string `json:"code" jsonschema:"stable machine-readable code, e.g. invalid_input, not_found, auth_failed, plan_required, upstream_unavailable, protocol_changed, duplicate, confirmation_required, approval_declined, approval_unavailable, proposal_expired, write_not_verified, uid_conflict"`
 	Message   string `json:"message"`
 	Retryable bool   `json:"retryable" jsonschema:"true when repeating the same call later may succeed without anyone changing anything"`
 }

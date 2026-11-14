@@ -3,6 +3,7 @@ package paprika_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -116,6 +117,35 @@ func TestErrorSentAsHTTP200IsAnError(t *testing.T) {
 	wantKind(t, err, paprika.KindNotFound)
 }
 
+func TestLapsedPlanIsItsOwnErrorAndKeepsPaprikasCode(t *testing.T) {
+	fake := newFake(t)
+	c := newClient(t, fake)
+	fake.SetPlanLapsed(true)
+	if _, err := c.List(context.Background(), paprika.Groceries); err != nil {
+		t.Fatalf("reading with a lapsed plan: %v", err)
+	}
+	err := c.AddGroceryItems(context.Background(), []paprika.NewGroceryItem{{UID: paprika.NewUID(), ListUID: "L", Name: "x"}})
+	wantKind(t, err, paprika.KindPlan)
+	var pe *paprika.Error
+	if !errors.As(err, &pe) || pe.Code != 4001 || pe.Retryable() {
+		t.Fatalf("error = %+v, want Paprika code 4001 and not retryable", pe)
+	}
+	if n := fake.Hits("POST /api/v1/account/login/"); n != 1 {
+		t.Fatalf("logins = %d, want 1 (a plan refusal is not a token problem)", n)
+	}
+}
+
+func TestPlanRefusalSentAs401IsNotAnAuthFailure(t *testing.T) {
+	fake := newFake(t)
+	c := newClient(t, fake)
+	fake.SetPlanLapsedWithStatus(http.StatusUnauthorized)
+	err := c.AddGroceryItems(context.Background(), []paprika.NewGroceryItem{{UID: paprika.NewUID(), ListUID: "L", Name: "x"}})
+	wantKind(t, err, paprika.KindPlan)
+	if n := fake.Hits("POST /api/v1/account/login/"); n != 1 {
+		t.Fatalf("logins = %d, want 1 (a plan refusal must not drop the token)", n)
+	}
+}
+
 func TestReadsRetryTransientFailures(t *testing.T) {
 	fake := newFake(t)
 	fake.FailNext("GET "+paprika.SyncPath+"meals/", 503, 429)
@@ -203,6 +233,48 @@ func TestUnexpectedResponseShapeIsProtocolError(t *testing.T) {
 			_, err = c.List(context.Background(), paprika.Meals)
 			wantKind(t, err, paprika.KindProtocol)
 		})
+	}
+}
+
+// loginAnswering is a client whose every login gets body; it counts the logins.
+func loginAnswering(t *testing.T, body string) (*paprika.Client, *int) {
+	t.Helper()
+	logins := 0
+	hc := paprikatest.HandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/login/") {
+			logins++
+		}
+		_, _ = w.Write([]byte(body))
+	}))
+	c, err := paprika.New(paprika.Options{BaseURL: "https://paprika.test", Email: "a", Password: "b", RetryWait: time.Millisecond, HTTPClient: hc})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c, &logins
+}
+
+func TestErrorCodeOfAnotherShapeKeepsTheError(t *testing.T) {
+	c, _ := loginAnswering(t, `{"error":{"code":"bad_login","message":"Invalid password."}}`)
+	_, err := c.Status(context.Background())
+	wantKind(t, err, paprika.KindAuth)
+	if !strings.Contains(err.Error(), "Invalid password.") {
+		t.Fatalf("error = %v, want Paprika's message", err)
+	}
+	for _, code := range []string{`"4001"`, `4001.0`, `4.001e3`} {
+		c, _ = loginAnswering(t, `{"error":{"code":`+code+`,"message":"Sync is not available."}}`)
+		_, err = c.Status(context.Background())
+		wantKind(t, err, paprika.KindPlan)
+	}
+}
+
+func TestPlanRefusedLoginIsNotHammered(t *testing.T) {
+	c, logins := loginAnswering(t, `{"error":{"code":4000,"message":"Premium required."}}`)
+	for range 3 {
+		_, err := c.Status(context.Background())
+		wantKind(t, err, paprika.KindPlan)
+	}
+	if *logins != 1 {
+		t.Fatalf("logins = %d, want 1", *logins)
 	}
 }
 

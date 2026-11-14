@@ -23,13 +23,14 @@ func (c *Client) currentToken(ctx context.Context) (string, error) {
 		return t, nil
 	}
 	// A rejected login is not retried for a while: hammering the login endpoint
-	// with bad credentials helps nobody and may get the account throttled.
+	// with bad credentials, or for an account whose plan Paprika refuses, helps
+	// nobody and may get the account throttled.
 	if c.authErr != nil && time.Since(c.authFailedAt) < authCooldown {
 		return "", c.authErr
 	}
 	token, err := c.login(ctx)
 	if err != nil {
-		if pe, ok := err.(*Error); ok && pe.Kind == KindAuth {
+		if pe, ok := err.(*Error); ok && (pe.Kind == KindAuth || pe.Kind == KindPlan) {
 			c.authErr, c.authFailedAt = pe, time.Now()
 		}
 		return "", err
