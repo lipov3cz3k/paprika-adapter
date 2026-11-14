@@ -16,8 +16,9 @@ import (
 // Paprika only accepts canonical 8-4-4-4-12 hex uids for entities a client creates.
 var uidPattern = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$`)
 
-// NewUID mints a uid in the format Paprika's own clients use.
-func NewUID() string { return strings.ToUpper(uuid.NewString()) }
+// NewUID mints a uid the way the Paprika 4 apps do: an uppercase version 7
+// UUID, which starts with the time it was made.
+func NewUID() string { return strings.ToUpper(uuid.Must(uuid.NewV7()).String()) }
 
 // NewMeal is one meal-plan entry to create. Together with mealWire it has the
 // keys the Paprika 4 apps post.

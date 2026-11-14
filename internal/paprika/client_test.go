@@ -239,6 +239,19 @@ func TestNewRowsCarryTheKeysPaprika4Sends(t *testing.T) {
 	}
 }
 
+func TestNewUIDIsAnUppercaseVersion7UUID(t *testing.T) {
+	first, second := paprika.NewUID(), paprika.NewUID()
+	for _, uid := range []string{first, second} {
+		// 8-4-4-4-12 with the version in the first digit of the third group.
+		if len(uid) != 36 || uid[14] != '7' || uid != strings.ToUpper(uid) {
+			t.Fatalf("uid %q is not an uppercase version 7 UUID", uid)
+		}
+	}
+	if first >= second {
+		t.Fatalf("uids do not sort by the time they were made: %q then %q", first, second)
+	}
+}
+
 func TestMalformedUIDIsRefusedLocally(t *testing.T) {
 	fake := newFake(t)
 	c := newClient(t, fake)
