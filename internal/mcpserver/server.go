@@ -97,7 +97,8 @@ func New(d Deps) *mcp.Server {
 		"A recipe's photo as an image. By default the small cover thumbnail; size=full returns a full-resolution gallery photo, "+
 			"which only some recipes have. get_recipe says whether a recipe has a photo and how many gallery photos."), s.getRecipePhoto)
 	add(reg, readTool("list_pantry", "List pantry",
-		"Pantry items from Paprika, optionally filtered by ingredient text or stock status."), s.listPantry)
+		"Pantry items from Paprika with their location (e.g. Fridge) and notes, optionally filtered by ingredient text, "+
+			"stock status or location. Also lists the pantry locations defined in Paprika."), s.listPantry)
 	add(reg, readTool("get_meal_plan", "Get meal plan",
 		"Dated meal-plan entries for a date range (default: the current Monday-to-Sunday week), plus the meal types available for planning."), s.getMealPlan)
 	add(reg, readTool("list_grocery_lists", "List grocery lists",
@@ -118,11 +119,12 @@ func New(d Deps) *mcp.Server {
 			"Prepare items to add to one grocery list. Writes nothing. Items already on the list (unpurchased, same name) are skipped "+
 				"unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.", false, false), s.proposeGroceries)
 		add(reg, writeTool("propose_pantry_items", "Propose pantry items",
-			"Prepare items to add to the Paprika pantry, as in stock and bought today. Writes nothing. Ingredients already in the pantry "+
+			"Prepare items to add to the Paprika pantry, as in stock and bought today, each optionally in a location such as the Fridge "+
+				"and with a note. Writes nothing. Ingredients already in the pantry "+
 				"are skipped unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.", false, false), s.proposePantry)
 		add(reg, writeTool("propose_pantry_edit", "Propose pantry edit",
 			"Prepare a change to ONE existing pantry item: its quantity, whether it is in stock, its expiration or purchase date, "+
-				"or its name. Writes nothing. Returns a proposal_id, a summary, and the item before and after.", false, false), s.proposePantryEdit)
+				"its name, its location (e.g. move it to the Freezer) or its notes. Writes nothing. Returns a proposal_id, a summary, and the item before and after.", false, false), s.proposePantryEdit)
 		add(reg, writeTool("propose_pantry_removal", "Propose pantry removal",
 			"Prepare the removal of pantry items, named by uid. Writes nothing. To record that something is used up but keep it "+
 				"in the pantry, use propose_pantry_edit with in_stock=false instead. Returns a proposal_id, a summary and the items "+

@@ -203,7 +203,7 @@ func TestOutageServesCacheMarkedStale(t *testing.T) {
 	}
 
 	st := h.ok("sync_status", nil)
-	if st.Healthy || len(st.Sync) != 10 {
+	if st.Healthy || len(st.Sync) != 11 {
 		t.Fatalf("sync_status healthy=%v collections=%d", st.Healthy, len(st.Sync))
 	}
 }

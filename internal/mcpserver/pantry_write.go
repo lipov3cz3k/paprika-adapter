@@ -16,6 +16,8 @@ type PantryInput struct {
 	Ingredient     string `json:"ingredient" jsonschema:"what is now in the pantry, without the amount, e.g. basmati rice"`
 	Quantity       string `json:"quantity,omitempty" jsonschema:"amount as free text, e.g. 2 kg or 3 cans"`
 	ExpirationDate string `json:"expiration_date,omitempty" jsonschema:"YYYY-MM-DD, only when the item has an expiration date"`
+	Location       string `json:"location,omitempty" jsonschema:"pantry location by name, e.g. Fridge; must already exist in Paprika (see list_pantry); default: the default location"`
+	Notes          string `json:"notes,omitempty" jsonschema:"free-text note, e.g. opened on 2026-11-10"`
 }
 
 type ProposePantryIn struct {
@@ -31,7 +33,7 @@ func (s *server) proposePantry(ctx context.Context, in ProposePantryIn, out *Pro
 		if strings.TrimSpace(it.Ingredient) == "" {
 			return invalid(fmt.Sprintf("items[%d].ingredient is required", i))
 		}
-		for field, v := range map[string]string{"ingredient": it.Ingredient, "quantity": it.Quantity} {
+		for field, v := range map[string]string{"ingredient": it.Ingredient, "quantity": it.Quantity, "notes": it.Notes} {
 			if terr := checkText(fmt.Sprintf("items[%d].%s", i, field), v); terr != nil {
 				return terr
 			}
@@ -42,10 +44,25 @@ func (s *server) proposePantry(ctx context.Context, in ProposePantryIn, out *Pro
 			}
 		}
 	}
-	if terr := s.ensureFresh(ctx, &out.Meta, string(paprika.Pantry)); terr != nil {
+	if terr := s.ensureFresh(ctx, &out.Meta, string(paprika.Pantry), string(paprika.PantryLocations)); terr != nil {
 		return terr
 	}
 	_ = s.Sync.Ensure(ctx, string(paprika.GroceryAisles), string(paprika.GroceryIngredients)) // aisle hints are optional
+	places, err := s.pantryPlaces(ctx)
+	if err != nil {
+		return fromErr(err)
+	}
+	where := make([]*paprika.PantryLocation, len(in.Items))
+	for i, it := range in.Items {
+		if strings.TrimSpace(it.Location) == "" {
+			continue
+		}
+		l, terr := places.resolve(fmt.Sprintf("items[%d].location", i), it.Location)
+		if terr != nil {
+			return terr
+		}
+		where[i] = &l
+	}
 	existing, err := store.Load[paprika.PantryItem](ctx, s.Store, paprika.Pantry)
 	if err != nil {
 		return fromErr(err)
@@ -59,9 +76,15 @@ func (s *server) proposePantry(ctx context.Context, in ProposePantryIn, out *Pro
 	var shown []PantryEntry
 	var lines []string
 	seen := map[string]bool{}
-	for _, raw := range in.Items {
+	for i, raw := range in.Items {
 		name, qty, exp := strings.TrimSpace(raw.Ingredient), strings.TrimSpace(raw.Quantity), strings.TrimSpace(raw.ExpirationDate)
 		item := paprika.NewPantryItem{UID: paprika.NewUID(), Ingredient: name, Quantity: qty, InStock: true, PurchaseDate: bought + " 00:00:00"}
+		if l := where[i]; l != nil {
+			item.LocationUID = &l.UID
+		}
+		if notes := strings.TrimSpace(raw.Notes); notes != "" {
+			item.Notes = &notes
+		}
 		if seen[norm(name)] {
 			p.Skipped = append(p.Skipped, SkippedItem{Name: name, Reason: "listed twice in this request"})
 			continue
@@ -83,8 +106,18 @@ func (s *server) proposePantry(ctx context.Context, in ProposePantryIn, out *Pro
 			item.Aisle, item.AisleUID = a.Name, a.UID
 		}
 		p.Pantry = append(p.Pantry, item)
-		shown = append(shown, PantryEntry{UID: item.UID, Ingredient: name, Quantity: qty, Aisle: item.Aisle, InStock: true, PurchaseDate: bought, ExpirationDate: exp})
-		lines = append(lines, strings.TrimSpace(qty+" "+name))
+		entry := PantryEntry{UID: item.UID, Ingredient: name, Quantity: qty, Aisle: item.Aisle, InStock: true, PurchaseDate: bought, ExpirationDate: exp,
+			LocationUID: deref(item.LocationUID), Notes: deref(item.Notes)}
+		entry.Location = places.name(entry.LocationUID)
+		shown = append(shown, entry)
+		line := strings.TrimSpace(qty + " " + name)
+		if where[i] != nil {
+			line += " (" + entry.Location + ")"
+		}
+		if entry.Notes != "" {
+			line += fmt.Sprintf(" [note: %s]", entry.Notes)
+		}
+		lines = append(lines, line)
 	}
 	if len(p.Pantry) == 0 {
 		return &ToolError{Code: "duplicate", Message: "nothing to add: every requested item is already in the pantry; pass allow_duplicates=true to add them anyway"}
@@ -144,8 +177,12 @@ func (s *server) commitPantry(ctx context.Context, p payload, out *CommitOut) *T
 		if got.Ingredient != want.Ingredient {
 			return &ToolError{Code: "uid_conflict", Message: "nothing was overwritten: Paprika already holds a different item under uid " + want.UID + "; propose again"}
 		}
+		if deref(got.LocationUID) != deref(want.LocationUID) || deref(got.Notes) != deref(want.Notes) {
+			return notVerified("Paprika accepted " + want.Ingredient + " but did not keep its location or notes")
+		}
 		out.Pantry = append(out.Pantry, pantryEntry(got))
 	}
+	s.labelPantry(ctx, out.Pantry)
 	out.Skipped = skipped
 	out.Sync = s.Sync.Freshness(ctx, string(paprika.Pantry))
 	return nil

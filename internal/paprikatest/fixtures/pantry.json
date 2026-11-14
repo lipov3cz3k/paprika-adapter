@@ -48,7 +48,7 @@
     "purchase_date": "2026-09-20 00:00:00",
     "quantity": "2 qt",
     "aisle_uid": "D41D8CD98F00B204E9800998ECF8427ED41D8CD98F00B204E9800998ECF8427E",
-    "location_uid": null,
+    "location_uid": "01A1CFCE-F290-7000-9CFC-BE283C2FB5D8",
     "notes": null
   },
   {
@@ -74,7 +74,7 @@
     "purchase_date": "2026-09-20 00:00:00",
     "quantity": "",
     "aisle_uid": "D41D8CD98F00B204E9800998ECF8427ED41D8CD98F00B204E9800998ECF8427E",
-    "location_uid": null,
+    "location_uid": "01A1CFCE-E10D-7000-B62E-3C33882FCC6F",
     "notes": null
   },
   {
@@ -87,8 +87,8 @@
     "purchase_date": "2026-09-20 00:00:00",
     "quantity": "2 heads",
     "aisle_uid": "02C70C54CAA4A4F7A7CAE38B5169974AF7B10941C8659E805EFC31F0A71314B8",
-    "location_uid": null,
-    "notes": null
+    "location_uid": "01A1CFCE-E10D-7000-B62E-3C33882FCC6F",
+    "notes": "half a bulb"
   },
   {
     "uid": "8A0F4C62-1B7E-4D95-A2C3-E9D6B5F7A840",

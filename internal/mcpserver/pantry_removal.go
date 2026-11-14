@@ -50,6 +50,7 @@ func (s *server) proposePantryRemoval(ctx context.Context, in ProposePantryRemov
 		return terr
 	}
 	view.PantryRemoved = p.PantryRemoval
+	s.labelPantry(ctx, view.PantryRemoved)
 	out.Proposal = view
 	return nil
 }

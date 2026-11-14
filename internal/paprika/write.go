@@ -46,7 +46,7 @@ type NewGroceryItem struct {
 }
 
 // NewPantryItem is one pantry item to create. Together with pantryWire it has
-// the keys the Paprika 4 apps post.
+// the keys the Paprika 4 apps post: notes and location_uid are sent as null unless set.
 type NewPantryItem struct {
 	UID            string  `json:"uid"`
 	Ingredient     string  `json:"ingredient"`
@@ -57,6 +57,8 @@ type NewPantryItem struct {
 	HasExpiration  bool    `json:"has_expiration"`
 	ExpirationDate *string `json:"expiration_date"` // "YYYY-MM-DD 00:00:00"
 	PurchaseDate   string  `json:"purchase_date"`   // "YYYY-MM-DD 00:00:00"
+	LocationUID    *string `json:"location_uid"`    // Paprika 4 pantry location; nil = the default one
+	Notes          *string `json:"notes"`           // Paprika 4
 }
 
 // MealEdit names what to overwrite on an existing meal-plan entry. Nil leaves a field as it is.
@@ -106,6 +108,8 @@ type PantryEdit struct {
 	InStock      *bool   `json:"in_stock,omitempty"`
 	Expiration   *string `json:"expiration,omitempty"`    // "YYYY-MM-DD 00:00:00"; "" removes the expiration date
 	PurchaseDate *string `json:"purchase_date,omitempty"` // "YYYY-MM-DD 00:00:00"
+	LocationUID  *string `json:"location_uid,omitempty"`  // uid of a pantry location
+	Notes        *string `json:"notes,omitempty"`         // "" removes the notes
 }
 
 // EditPantryItem overwrites an existing pantry item with current plus edit.
@@ -132,6 +136,15 @@ func (c *Client) EditPantryItem(ctx context.Context, current Raw, edit PantryEdi
 	}
 	if edit.PurchaseDate != nil {
 		obj["purchase_date"] = *edit.PurchaseDate
+	}
+	if edit.LocationUID != nil {
+		obj["location_uid"] = *edit.LocationUID
+	}
+	if edit.Notes != nil {
+		obj["notes"] = nil
+		if *edit.Notes != "" {
+			obj["notes"] = *edit.Notes
+		}
 	}
 	obj["deleted"] = false
 	return c.upsert(ctx, Pantry, []map[string]any{obj})
@@ -205,13 +218,12 @@ func (c *Client) AddGroceryItems(ctx context.Context, items []NewGroceryItem) er
 	return c.upsert(ctx, Groceries, wire)
 }
 
-// A new item is sent without a location: the apps then show it in the default
-// one. A location uid they do not know would make them delete the item.
+// A new item without a location is sent with location_uid null: the apps then
+// show it in the default one. A location uid they do not know would make them
+// delete the item, so only uids Paprika lists are ever sent.
 type pantryWire struct {
 	NewPantryItem
-	Notes       *string `json:"notes"`
-	LocationUID *string `json:"location_uid"`
-	Deleted     bool    `json:"deleted"`
+	Deleted bool `json:"deleted"`
 }
 
 // AddPantryItems creates pantry items in one request. The same uid caveat as

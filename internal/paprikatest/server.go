@@ -40,7 +40,7 @@ const syncPath = "/api/v3/sync/"
 
 var (
 	collections = []string{
-		"categories", "pantry", "meals", "mealtypes", "grocerylists", "groceries", "groceryaisles", "groceryingredients", "photos",
+		"categories", "pantrylocations", "pantry", "meals", "mealtypes", "grocerylists", "groceries", "groceryaisles", "groceryingredients", "photos",
 	}
 	// Thumbnail is what a recipe's photo link serves, FullPhoto what a gallery photo's link serves.
 	Thumbnail = testJPEG(32, 24)

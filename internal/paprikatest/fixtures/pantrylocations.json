@@ -1,0 +1,5 @@
+[
+  {"uid": "cc5dffa2-a02b-409a-85e8-e240f2ffaee4", "name": "Pantry", "order_flag": 0, "is_default": true},
+  {"uid": "01A1CFCE-E10D-7000-B62E-3C33882FCC6F", "name": "Fridge", "order_flag": 1, "is_default": false},
+  {"uid": "01A1CFCE-F290-7000-9CFC-BE283C2FB5D8", "name": "Freezer", "order_flag": 2, "is_default": false}
+]

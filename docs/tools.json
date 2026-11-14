@@ -230,6 +230,18 @@
               "ingredient": {
                 "type": "string"
               },
+              "location": {
+                "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                "type": "string"
+              },
+              "location_uid": {
+                "description": "uid of that location as Paprika stores it; empty for the default location",
+                "type": "string"
+              },
+              "notes": {
+                "description": "free-text note on the item",
+                "type": "string"
+              },
               "purchase_date": {
                 "description": "YYYY-MM-DD",
                 "type": "string"
@@ -273,6 +285,18 @@
               "ingredient": {
                 "type": "string"
               },
+              "location": {
+                "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                "type": "string"
+              },
+              "location_uid": {
+                "description": "uid of that location as Paprika stores it; empty for the default location",
+                "type": "string"
+              },
+              "notes": {
+                "description": "free-text note on the item",
+                "type": "string"
+              },
               "purchase_date": {
                 "description": "YYYY-MM-DD",
                 "type": "string"
@@ -314,6 +338,18 @@
                 "type": "boolean"
               },
               "ingredient": {
+                "type": "string"
+              },
+              "location": {
+                "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                "type": "string"
+              },
+              "location_uid": {
+                "description": "uid of that location as Paprika stores it; empty for the default location",
+                "type": "string"
+              },
+              "notes": {
+                "description": "free-text note on the item",
                 "type": "string"
               },
               "purchase_date": {
@@ -1752,7 +1788,7 @@
       "readOnlyHint": true,
       "title": "List pantry"
     },
-    "description": "Pantry items from Paprika, optionally filtered by ingredient text or stock status.",
+    "description": "Pantry items from Paprika with their location (e.g. Fridge) and notes, optionally filtered by ingredient text, stock status or location. Also lists the pantry locations defined in Paprika.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -1763,6 +1799,10 @@
         "limit": {
           "description": "maximum items to return, 1 to 500, default 100",
           "type": "integer"
+        },
+        "location": {
+          "description": "only items in this pantry location, by name, e.g. Fridge; see locations in the result",
+          "type": "string"
         },
         "query": {
           "description": "only items whose ingredient contains this text, case-insensitive",
@@ -1818,6 +1858,18 @@
               "ingredient": {
                 "type": "string"
               },
+              "location": {
+                "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                "type": "string"
+              },
+              "location_uid": {
+                "description": "uid of that location as Paprika stores it; empty for the default location",
+                "type": "string"
+              },
+              "notes": {
+                "description": "free-text note on the item",
+                "type": "string"
+              },
               "purchase_date": {
                 "description": "YYYY-MM-DD",
                 "type": "string"
@@ -1835,6 +1887,29 @@
               "uid",
               "ingredient",
               "in_stock"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "null",
+            "array"
+          ]
+        },
+        "locations": {
+          "description": "pantry locations defined in Paprika, in the app's order; created in the app, not here",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "uid": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "uid",
+              "name"
             ],
             "type": "object"
           },
@@ -2208,6 +2283,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -2251,6 +2338,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -2292,6 +2391,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -2765,6 +2876,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -2808,6 +2931,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -2849,6 +2984,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -3319,6 +3466,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -3362,6 +3521,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -3403,6 +3574,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -3648,7 +3831,7 @@
       "readOnlyHint": false,
       "title": "Propose pantry edit"
     },
-    "description": "Prepare a change to ONE existing pantry item: its quantity, whether it is in stock, its expiration or purchase date, or its name. Writes nothing. Returns a proposal_id, a summary, and the item before and after.",
+    "description": "Prepare a change to ONE existing pantry item: its quantity, whether it is in stock, its expiration or purchase date, its name, its location (e.g. move it to the Freezer) or its notes. Writes nothing. Returns a proposal_id, a summary, and the item before and after.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -3678,6 +3861,17 @@
         "item_uid": {
           "description": "uid of the pantry item to change, from list_pantry",
           "type": "string"
+        },
+        "location": {
+          "description": "move the item to this pantry location, by name, e.g. Freezer; it must already exist in Paprika",
+          "type": "string"
+        },
+        "notes": {
+          "description": "new free-text note; an empty string removes it",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "purchase_date": {
           "description": "set the purchase date, YYYY-MM-DD",
@@ -3890,6 +4084,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -3933,6 +4139,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -3974,6 +4192,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -4219,7 +4449,7 @@
       "readOnlyHint": false,
       "title": "Propose pantry items"
     },
-    "description": "Prepare items to add to the Paprika pantry, as in stock and bought today. Writes nothing. Ingredients already in the pantry are skipped unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.",
+    "description": "Prepare items to add to the Paprika pantry, as in stock and bought today, each optionally in a location such as the Fridge and with a note. Writes nothing. Ingredients already in the pantry are skipped unless allow_duplicates is true. Returns a proposal_id and a summary to show the user.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {
@@ -4238,6 +4468,14 @@
               },
               "ingredient": {
                 "description": "what is now in the pantry, without the amount, e.g. basmati rice",
+                "type": "string"
+              },
+              "location": {
+                "description": "pantry location by name, e.g. Fridge; must already exist in Paprika (see list_pantry); default: the default location",
+                "type": "string"
+              },
+              "notes": {
+                "description": "free-text note, e.g. opened on 2026-11-10",
                 "type": "string"
               },
               "quantity": {
@@ -4455,6 +4693,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -4498,6 +4748,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -4539,6 +4801,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -4998,6 +5272,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -5041,6 +5327,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -5082,6 +5380,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {
@@ -5567,6 +5877,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -5610,6 +5932,18 @@
                   "ingredient": {
                     "type": "string"
                   },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
+                    "type": "string"
+                  },
                   "purchase_date": {
                     "description": "YYYY-MM-DD",
                     "type": "string"
@@ -5651,6 +5985,18 @@
                     "type": "boolean"
                   },
                   "ingredient": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "description": "pantry location the item is kept in, e.g. Fridge; items without one are in the default location",
+                    "type": "string"
+                  },
+                  "location_uid": {
+                    "description": "uid of that location as Paprika stores it; empty for the default location",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "free-text note on the item",
                     "type": "string"
                   },
                   "purchase_date": {

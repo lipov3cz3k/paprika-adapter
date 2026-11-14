@@ -13,6 +13,7 @@ import (
 type ListPantryIn struct {
 	Query       string `json:"query,omitempty" jsonschema:"only items whose ingredient contains this text, case-insensitive"`
 	InStockOnly bool   `json:"in_stock_only,omitempty" jsonschema:"leave out items marked as not in stock"`
+	Location    string `json:"location,omitempty" jsonschema:"only items in this pantry location, by name, e.g. Fridge; see locations in the result"`
 	Limit       int    `json:"limit,omitempty" jsonschema:"maximum items to return, 1 to 500, default 100"`
 }
 
@@ -24,22 +25,39 @@ type PantryEntry struct {
 	InStock        bool   `json:"in_stock"`
 	PurchaseDate   string `json:"purchase_date,omitempty" jsonschema:"YYYY-MM-DD"`
 	ExpirationDate string `json:"expiration_date,omitempty" jsonschema:"YYYY-MM-DD, present only when the item has an expiration date"`
+	Location       string `json:"location,omitempty" jsonschema:"pantry location the item is kept in, e.g. Fridge; items without one are in the default location"`
+	LocationUID    string `json:"location_uid,omitempty" jsonschema:"uid of that location as Paprika stores it; empty for the default location"`
+	Notes          string `json:"notes,omitempty" jsonschema:"free-text note on the item"`
 }
 
 type ListPantryOut struct {
 	Meta
 	Items     []PantryEntry `json:"items,omitzero" jsonschema:"sorted by ingredient"`
+	Locations []NamedRef    `json:"locations,omitzero" jsonschema:"pantry locations defined in Paprika, in the app's order; created in the app, not here"`
 	Total     int           `json:"total" jsonschema:"items matching the filters before limit"`
 	Truncated bool          `json:"truncated"`
 }
 
 func (s *server) listPantry(ctx context.Context, in ListPantryIn, out *ListPantryOut) *ToolError {
-	if terr := s.ensure(ctx, &out.Meta, string(paprika.Pantry)); terr != nil {
+	if terr := s.ensure(ctx, &out.Meta, string(paprika.Pantry), string(paprika.PantryLocations)); terr != nil {
 		return terr
 	}
 	items, err := store.Load[paprika.PantryItem](ctx, s.Store, paprika.Pantry)
 	if err != nil {
 		return fromErr(err)
+	}
+	places, err := s.pantryPlaces(ctx)
+	if err != nil {
+		return fromErr(err)
+	}
+	out.Locations = places.refs()
+	var only *paprika.PantryLocation
+	if strings.TrimSpace(in.Location) != "" {
+		l, terr := places.resolve("location", in.Location)
+		if terr != nil {
+			return terr
+		}
+		only = &l
 	}
 	sort.Slice(items, func(i, j int) bool {
 		return strings.ToLower(items[i].Ingredient) < strings.ToLower(items[j].Ingredient)
@@ -50,6 +68,9 @@ func (s *server) listPantry(ctx context.Context, in ListPantryIn, out *ListPantr
 		if (in.InStockOnly && !p.InStock) || !strings.Contains(strings.ToLower(p.Ingredient), needle) {
 			continue
 		}
+		if only != nil && places.name(deref(p.LocationUID)) != only.Name {
+			continue
+		}
 		out.Total++
 		if len(out.Items) == limit {
 			continue
@@ -57,12 +78,13 @@ func (s *server) listPantry(ctx context.Context, in ListPantryIn, out *ListPantr
 		out.Items = append(out.Items, pantryEntry(p))
 	}
 	out.Truncated = out.Total > len(out.Items)
+	places.label(out.Items)
 	return nil
 }
 
 func pantryEntry(p paprika.PantryItem) PantryEntry {
 	e := PantryEntry{UID: p.UID, Ingredient: p.Ingredient, Quantity: p.Quantity, Aisle: p.Aisle, InStock: p.InStock,
-		PurchaseDate: dateOnly(deref(p.PurchaseDate))}
+		PurchaseDate: dateOnly(deref(p.PurchaseDate)), LocationUID: deref(p.LocationUID), Notes: deref(p.Notes)}
 	if p.HasExpiration {
 		e.ExpirationDate = dateOnly(deref(p.ExpirationDate))
 	}
