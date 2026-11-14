@@ -132,7 +132,7 @@ new rows. Three change existing data: `propose_recipe_edit` (four fields of a re
 - The proposal lists every change with the old and the new value. That is what the user should see before
   approving, and the commit result repeats it, so the old text can be put back with another edit.
 - At commit the recipe is read from Paprika, the edited fields are overwritten on that copy, and the whole
-  recipe is written back with a new content hash, then read back. Fields the adapter does not know are
+  recipe is written back with a new hash, then read back. Fields the adapter does not know are
   carried over untouched.
 - An edit made in an app to the **same field** between propose and commit is overwritten without warning; this
   was chosen deliberately. Edits to other fields survive. An edit made in an app during the fraction of a

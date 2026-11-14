@@ -249,9 +249,6 @@ func TestLiveRecipeEdit(t *testing.T) {
 	if !strings.Contains(strings.ToLower(was.Name), "test") {
 		t.Skipf("recipe %s is not named as a test recipe; refusing to edit it", uid)
 	}
-	if computed, _ := RecipeHash(original.JSON); computed != was.Hash {
-		t.Logf("the stored hash of this recipe is not the one this adapter computes (another client hashed it)")
-	}
 
 	stamp := "[adapter-it] " + time.Now().UTC().Format(time.RFC3339)
 	rating := was.Rating%5 + 1
@@ -279,7 +276,6 @@ func TestLiveRecipeEdit(t *testing.T) {
 		if got.Rating != was.Rating || got.Notes != was.Notes || got.Description != was.Description || got.Directions != was.Directions {
 			t.Errorf("restore did not take; check %q in the app", was.Name)
 		}
-		t.Logf("restored; hash equals the original: %v", got.Hash == was.Hash)
 	})
 
 	edited, err := c.Recipe(ctx, uid)
@@ -294,7 +290,7 @@ func TestLiveRecipeEdit(t *testing.T) {
 		t.Fatalf("read back rating=%d notes=%q description=%q directions=%q", got.Rating, got.Notes, got.Description, got.Directions)
 	}
 	if got.Hash == was.Hash {
-		t.Error("the content hash did not change with the content")
+		t.Error("the hash did not change with the edit")
 	}
 	// Everything that was not edited must have survived the whole-object replace.
 	var before, after map[string]json.RawMessage

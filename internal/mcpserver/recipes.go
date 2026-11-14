@@ -80,7 +80,7 @@ type GetRecipeIn struct {
 type RecipeDetail struct {
 	UID               string             `json:"uid"`
 	Name              string             `json:"name"`
-	Hash              string             `json:"hash" jsonschema:"Paprika's content hash; it changes whenever the recipe is edited"`
+	Hash              string             `json:"hash" jsonschema:"Paprika's change token; it is different after every edit of the recipe"`
 	IngredientsRaw    string             `json:"ingredients_raw" jsonschema:"ingredient text exactly as stored in Paprika, one ingredient per line; this is the authoritative version"`
 	IngredientsParsed []ingredients.Line `json:"ingredients_parsed" jsonschema:"best-effort split of ingredients_raw into quantity, unit and item; a convenience that may be wrong"`
 	Directions        string             `json:"directions"`

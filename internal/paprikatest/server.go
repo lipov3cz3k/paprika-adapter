@@ -46,6 +46,7 @@ var (
 	FullPhoto = testJPEG(320, 240)
 	writable  = map[string]bool{"meals": true, "groceries": true, "pantry": true}
 	uidShape  = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+	hashShape = regexp.MustCompile(`^[0-9A-F]{16}$`)
 	dayMarker = regexp.MustCompile(`@([DP])(\d+)`)
 )
 
@@ -281,7 +282,7 @@ func (s *Server) UpdateRecipe(uid, field string, value any) {
 	for _, r := range s.recipes {
 		if r["uid"] == uid {
 			r[field] = value
-			r["hash"] = fmt.Sprintf("%064X", s.counters["recipes"]+1)
+			r["hash"] = fmt.Sprintf("%016X", s.counters["recipes"]+1)
 			s.counters["recipes"]++
 			return
 		}
@@ -459,7 +460,9 @@ func (s *Server) writeRecipe(w http.ResponseWriter, r *http.Request, uid string)
 		fail(w, http.StatusBadRequest, "Invalid data.")
 		return
 	}
-	if hash, _ := rec["hash"].(string); len(hash) != 64 {
+	// Paprika is not known to check the hash. The fake does, so that a client
+	// which forgets to stamp a new one fails a test instead of confusing the apps.
+	if hash, _ := rec["hash"].(string); !hashShape.MatchString(hash) {
 		fail(w, http.StatusOK, "Invalid hash.")
 		return
 	}

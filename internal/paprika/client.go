@@ -141,7 +141,7 @@ func (c *Client) List(ctx context.Context, col Collection) ([]Raw, error) {
 	return decodeRows("GET "+path, res)
 }
 
-// RecipeRefs returns the uid and content hash of every recipe in the account.
+// RecipeRefs returns the uid and hash of every recipe in the account.
 func (c *Client) RecipeRefs(ctx context.Context) ([]RecipeRef, error) {
 	path := SyncPath + "recipes/"
 	res, err := c.call(ctx, http.MethodGet, path, nil)

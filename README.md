@@ -70,7 +70,7 @@ Follow [docs/INSTALL.md](docs/INSTALL.md) for the steps in between (Docker, toke
 ```
 cmd/paprika-adapter    CLI: serve (MCP over HTTP, token auth), token, sync, verify, export, tools
 cmd/demo               MCP client that walks the end-to-end flow
-internal/paprika       Paprika client: login, envelope, reads, the three create-only writes, the recipe edit and its content hash, drift detection
+internal/paprika       Paprika client: login, envelope, reads, the three create-only writes, the recipe edit, drift detection
 internal/store         SQLite cache: recipes + FTS5 search, other collections, sync state, proposals
 internal/syncer        incremental pull, freshness reporting
 internal/mcpserver     the tools

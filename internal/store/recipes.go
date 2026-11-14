@@ -18,7 +18,7 @@ type CachedRecipe struct {
 	FetchedAt time.Time
 }
 
-// RecipeHashes returns uid -> content hash for every cached recipe.
+// RecipeHashes returns uid -> hash for every cached recipe.
 func (s *Store) RecipeHashes(ctx context.Context) (map[string]string, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT uid, hash FROM recipes`)
 	if err != nil {

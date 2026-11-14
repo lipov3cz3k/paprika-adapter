@@ -891,7 +891,7 @@
               "type": "boolean"
             },
             "hash": {
-              "description": "Paprika's content hash; it changes whenever the recipe is edited",
+              "description": "Paprika's change token; it is different after every edit of the recipe",
               "type": "string"
             },
             "in_trash": {
